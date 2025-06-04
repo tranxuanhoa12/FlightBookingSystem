@@ -1,0 +1,134 @@
+﻿@model FlightBookingApp.Models.LoginViewModel
+
+@{
+    ViewData["Title"] = "Đăng nhập";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Đăng nhập</h4>
+                </div>
+                <div class="card-body">
+                    @if (TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger">
+                            @TempData["Error"]
+                        </div>
+                    }
+                    @if (TempData["Success"] != null)
+                    {
+                        <div class="alert alert-success">
+                            @TempData["Success"]
+                        </div>
+                    }
+                    @if (ViewData.ModelState.Any(x => x.Value.Errors.Any()))
+                    {
+                        <div class="alert alert-danger">
+                            <ul>
+                                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                                {
+                                    <li>@error.ErrorMessage</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+
+                    <!-- Biểu mẫu đăng nhập -->
+                    <div id="loginFormSection" style="@(TempData["ShowCodeInput"] != null || TempData["ShowResetPasswordForm"] != null ? "display: none;" : "")">
+                        <form id="loginForm" method="post" action="/Account/Login">
+                            <div class="mb-3">
+                                <label for="Email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="Email" name="Email" required />
+                            </div>
+                            <div class="mb-3">
+                                <label for="Password" class="form-label">Mật khẩu</label>
+                                <input type="password" class="form-control" id="Password" name="Password" required />
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Đăng nhập</button>
+                        </form>
+                        <div class="mt-3 text-center">
+                            <a class="nav-link" href="@Url.Action("Register", "Account")">Chưa có tài khoản? Đăng ký ngay</a>
+                            <a class="nav-link" href="#" onclick="showForgotPasswordForm()">Quên mật khẩu?</a>
+                        </div>
+                    </div>
+
+                    <!-- Biểu mẫu quên mật khẩu (nhập email) -->
+                    <div id="forgotPasswordFormSection" style="@(TempData["ShowCodeInput"] != null || TempData["ShowResetPasswordForm"] != null ? "display: none;" : "display: none;")">
+                        <form id="forgotPasswordForm" method="post" action="/Account/ForgotPassword">
+                            <div class="mb-3">
+                                <label for="ForgotEmail" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="ForgotEmail" name="Email" required />
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100" id="forgotPasswordButton">Gửi mã xác nhận</button>
+                        </form>
+                        <div class="mt-3 text-center">
+                            <a class="nav-link" href="#" onclick="showLoginForm()">Quay lại đăng nhập</a>
+                        </div>
+                    </div>
+
+                    <!-- Biểu mẫu nhập mã xác nhận -->
+                    <div id="verifyCodeFormSection" style="@(TempData["ShowCodeInput"] != null ? "" : "display: none;")">
+                        <form id="verifyCodeForm" method="post" action="/Account/ForgotPassword">
+                            <input type="hidden" name="Email" value="@TempData["Email"]" />
+                            <div class="mb-3">
+                                <label for="VerificationCode" class="form-label">Mã xác nhận (5 số)</label>
+                                <input type="text" class="form-control" id="VerificationCode" name="VerificationCode" maxlength="5" pattern="\d{5}" required />
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Xác nhận mã</button>
+                        </form>
+                        <div class="mt-3 text-center">
+                            <a class="nav-link" href="#" onclick="showLoginForm()">Quay lại đăng nhập</a>
+                        </div>
+                    </div>
+
+                    <!-- Biểu mẫu tạo mật khẩu mới -->
+                    <div id="resetPasswordFormSection" style="@(TempData["ShowResetPasswordForm"] != null ? "" : "display: none;")">
+                        <form id="resetPasswordForm" method="post" action="/Account/ResetPassword">
+                            <input type="hidden" name="Email" id="ResetEmail" value="@TempData["Email"]" />
+                            <div class="mb-3">
+                                <label for="NewPassword" class="form-label">Mật khẩu mới</label>
+                                <input type="password" class="form-control" id="NewPassword" name="NewPassword" required />
+                            </div>
+                            <div class="mb-3">
+                                <label for="ConfirmNewPassword" class="form-label">Xác nhận mật khẩu mới</label>
+                                <input type="password" class="form-control" id="ConfirmNewPassword" name="ConfirmNewPassword" required />
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Cập nhật mật khẩu</button>
+                        </form>
+                        <div class="mt-3 text-center">
+                            <a class="nav-link" href="#" onclick="showLoginForm()">Quay lại đăng nhập</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showForgotPasswordForm() {
+        document.getElementById("loginFormSection").style.display = "none";
+        document.getElementById("forgotPasswordFormSection").style.display = "block";
+        document.getElementById("verifyCodeFormSection").style.display = "none";
+        document.getElementById("resetPasswordFormSection").style.display = "none";
+    }
+
+    function showLoginForm() {
+        document.getElementById("loginFormSection").style.display = "block";
+        document.getElementById("forgotPasswordFormSection").style.display = "none";
+        document.getElementById("verifyCodeFormSection").style.display = "none";
+        document.getElementById("resetPasswordFormSection").style.display = "none";
+    }
+
+    function showResetPasswordForm(email) {
+        document.getElementById("loginFormSection").style.display = "none";
+        document.getElementById("forgotPasswordFormSection").style.display = "none";
+        document.getElementById("verifyCodeFormSection").style.display = "none";
+        document.getElementById("resetPasswordFormSection").style.display = "block";
+        document.getElementById("ResetEmail").value = email;
+    }
+</script>

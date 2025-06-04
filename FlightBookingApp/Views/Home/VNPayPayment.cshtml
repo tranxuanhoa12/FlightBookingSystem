@@ -1,0 +1,69 @@
+﻿@{
+    ViewData["Title"] = "Thanh toán VNPay QR";
+}
+
+<style>
+    body {
+        font-family: 'Arial', sans-serif;
+        background-color: #f4f4f9;
+        color: #333;
+        text-align: center;
+    }
+
+    .container {
+        max-width: 600px;
+        margin: 40px auto;
+        padding: 20px;
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+        color: #2c3e50;
+        margin-bottom: 20px;
+    }
+
+    .qr-code {
+        margin: 20px 0;
+    }
+
+    .btn-complete {
+        background-color: #3498db;
+        color: #fff;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        margin-top: 20px;
+    }
+
+        .btn-complete:hover {
+            background-color: #2980b9;
+        }
+
+    .error-message {
+        color: #e74c3c;
+        margin-top: 20px;
+    }
+</style>
+
+<div class="container">
+    <h2>Thanh toán VNPay QR</h2>
+
+    @if (ViewBag.PaymentUrl != null)
+    {
+        <p>Vui lòng quét mã QR dưới đây để thanh toán:</p>
+        <div class="qr-code">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=@Uri.EscapeDataString(ViewBag.PaymentUrl)" alt="QR Code" />
+        </div>
+        <p>Sau khi thanh toán, hệ thống sẽ tự động cập nhật trạng thái. Bạn cũng có thể bấm nút dưới đây để kiểm tra.</p>
+        <a href="@Url.Action("PaymentSuccess", "Home", new { bookingId = ViewBag.BookingId })" class="btn-complete">Kiểm tra trạng thái thanh toán</a>
+    }
+    else
+    {
+        <p class="error-message">Không thể tạo mã QR thanh toán. Vui lòng thử lại.</p>
+    }
+</div>

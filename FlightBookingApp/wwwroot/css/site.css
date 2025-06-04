@@ -1,0 +1,58 @@
+﻿/* Custom styles */
+body {
+    font-family: Arial, sans-serif;
+}
+
+.container {
+    max-width: 1200px;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+.header {
+    background-color: white; /* Thay "màu nền" */
+    padding: 10px 20px; /* Thay "đệm" */
+    display: flex; /* Thay "hiển thị" */
+    justify-content: space-between; /* Thay "căn chỉnh nội dung" */
+    align-items: center; /* Thay "căn chỉnh các mục" */
+}
+
+    .header .title {
+        font-size: 24px; /* Thay "cỡ chữ" */
+        font-weight: bold; /* Thay "độ đậm của chữ" */
+        color: white; /* Thay "màu sắc" */
+    }
+
+    .header .login {
+        color: #d9534f; /* Thay "màu sắc" */
+        text-decoration: none; /* Thay "trang trí văn bản" */
+    }
+
+.main-content {
+    margin: 20px 0; /* Thay "lề" */
+    text-align: center; /* Thay "căn chỉnh văn bản" */
+    padding: 50px; /* Thay "đệm" */
+    background-color: #fff; /* Thay "màu nền" */
+    border: 1px solid #ccc; /* Thay "đường viền" */
+}
+
+.search-section {
+    background-color: #d3d3d3; /* Thay "màu nền" */
+    padding: 20px; /* Thay "đệm" */
+    text-align: center; /* Thay "căn chỉnh văn bản" */
+}
+
+    .search-section .form-group {
+        display: inline-block; /* Thay "hiển thị" */
+        margin: 0 10px; /* Thay "lề" */
+    }
+
+.footer {
+    background-color: white; /* Thay "màu nền" */
+    padding: 10px 20px; /* Thay "đệm" */
+    text-align: center; /* Thay "căn chỉnh văn bản" */
+    position: fixed; /* Thay "vị trí" */
+    bottom: 0; /* Thay "đáy" */
+    width: 100%; /* Thay "chiều rộng" */
+}

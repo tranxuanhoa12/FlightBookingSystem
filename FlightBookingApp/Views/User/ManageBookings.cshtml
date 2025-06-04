@@ -1,0 +1,243 @@
+﻿@model FlightBookingApp.ViewModel.ManageBookingsViewModel
+
+@{
+    ViewData["Title"] = "Quản lý vé";
+}
+
+<style>
+    body {
+        font-family: 'Arial', sans-serif;
+        background-color: #f4f4f9;
+        color: #333;
+    }
+
+    .container {
+        max-width: 1200px;
+        margin: 40px auto;
+        padding: 20px;
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+        color: #2c3e50;
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    h4 {
+        color: #34495e;
+        margin-top: 20px;
+        border-bottom: 2px solid #3498db;
+        padding-bottom: 5px;
+    }
+
+    .booking-card {
+        background-color: #f9f9f9;
+        padding: 20px;
+        margin-bottom: 20px;
+        border-radius: 5px;
+        border-left: 4px solid #3498db;
+    }
+
+    .flight-info {
+        background-color: #ecf0f1;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 15px;
+    }
+
+    ul {
+        list-style-type: none;
+        padding: 0;
+    }
+
+    li {
+        padding: 10px;
+        margin: 5px 0;
+        border-radius: 5px;
+        background-color: #fff;
+        border: 1px solid #ddd;
+    }
+
+    p {
+        margin: 10px 0;
+        font-size: 16px;
+    }
+
+    .status-pending {
+        color: #e67e22;
+        font-weight: bold;
+    }
+
+    .status-completed {
+        color: #28a745;
+        font-weight: bold;
+    }
+
+    .status-failed {
+        color: #e74c3c;
+        font-weight: bold;
+    }
+
+    .no-bookings {
+        text-align: center;
+        color: #7f8c8d;
+        font-size: 18px;
+        margin-top: 20px;
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+    }
+
+        .pagination a {
+            color: #007bff;
+            padding: 8px 16px;
+            text-decoration: none;
+            border: 1px solid #ddd;
+            margin: 0 4px;
+            border-radius: 5px;
+        }
+
+            .pagination a.active {
+                background-color: #007bff;
+                color: white;
+                border: 1px solid #007bff;
+            }
+
+            .pagination a:hover:not(.active) {
+                background-color: #ddd;
+            }
+
+    /* CSS cho nút Thoát */
+    .btn-exit {
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: #e74c3c; /* Màu đỏ nhạt */
+        color: #fff;
+        text-decoration: none;
+        border-radius: 5px;
+        font-size: 16px;
+        font-weight: bold;
+        transition: background-color 0.3s ease;
+        margin-bottom: 20px;
+    }
+
+        .btn-exit:hover {
+            background-color: #c0392b; /* Màu đỏ đậm hơn khi hover */
+        }
+</style>
+
+<div class="container">
+    <a class="btn-exit" href="@Url.Action("Index", "Home")">Thoát</a>
+    <h2>Quản lý vé</h2>
+
+    @if (Model.Bookings == null || !Model.Bookings.Any())
+    {
+        <p class="no-bookings">Bạn chưa có đặt vé nào.</p>
+    }
+    else
+    {
+        @foreach (var booking in Model.Bookings)
+        {
+            <div class="booking-card">
+                <h4>Đặt vé #@booking.BookingId - @(booking.BookingDate.ToString("dd/MM/yyyy HH:mm"))</h4>
+                <p>
+                    <strong>Trạng thái:</strong>
+                    <span class="@(booking.PaymentStatus == "Completed")">
+                        Đã thanh toán
+                    </span>
+                </p>
+                <p><strong>Tổng tiền:</strong> @booking.TotalPrice.ToString("N0") VNĐ</p>
+
+                <h5>Thông tin liên hệ</h5>
+                <p><strong>Họ tên:</strong> @booking.ContactName</p>
+                <p><strong>Email:</strong> @booking.ContactEmail</p>
+                <p><strong>Số điện thoại:</strong> @booking.ContactPhone</p>
+                <p><strong>Giới tính:</strong> @(booking.ContactGender == "Male" ? "Nam" : booking.ContactGender == "Female" ? "Nữ" : booking.ContactGender)</p>
+
+                <h5>Thông tin chuyến bay</h5>
+                @if (booking.OutboundFlight != null)
+                {
+                    <div class="flight-info">
+                        <h6>Chuyến đi: @booking.OutboundFlight.DepartureAirport.City (@booking.OutboundFlight.DepartureAirport.IataCode) → @booking.OutboundFlight.DestinationAirport.City (@booking.OutboundFlight.DestinationAirport.IataCode)</h6>
+                        <p><strong>Chuyến bay:</strong> @booking.OutboundFlight.Airline @booking.OutboundFlight.FlightNumber</p>
+                        <p><strong>Khởi hành:</strong> @booking.OutboundFlight.DepartureTime.ToString("dd/MM/yyyy HH:mm")</p>
+                        <p><strong>Đến nơi:</strong> @booking.OutboundFlight.ArrivalTime.ToString("dd/MM/yyyy HH:mm")</p>
+                        <p><strong>Giá vé:</strong> @booking.OutboundFlight.Price.ToString("N0") VNĐ/người</p>
+                    </div>
+                }
+                else
+                {
+                    <p>Không có thông tin chuyến bay đi.</p>
+                }
+
+                @if (booking.IsRoundTrip && booking.ReturnFlight != null)
+                {
+                    <div class="flight-info">
+                        <h6>Chuyến về: @booking.ReturnFlight.DepartureAirport.City (@booking.ReturnFlight.DepartureAirport.IataCode) → @booking.ReturnFlight.DestinationAirport.City (@booking.ReturnFlight.DestinationAirport.IataCode)</h6>
+                        <p><strong>Chuyến bay:</strong> @booking.ReturnFlight.Airline @booking.ReturnFlight.FlightNumber</p>
+                        <p><strong>Khởi hành:</strong> @booking.ReturnFlight.DepartureTime.ToString("dd/MM/yyyy HH:mm")</p>
+                        <p><strong>Đến nơi:</strong> @booking.ReturnFlight.ArrivalTime.ToString("dd/MM/yyyy HH:mm")</p>
+                        <p><strong>Giá vé:</strong> @booking.ReturnFlight.Price.ToString("N0") VNĐ/người</p>
+                    </div>
+                }
+
+                <h5>Danh sách hành khách</h5>
+                <ul>
+                    @for (int i = 0; i < booking.Passengers.Count; i++)
+                    {
+                        var passenger = booking.Passengers[i];
+                        <li>
+                            <strong>Hành khách @(i + 1) (@(passenger.IsAdult ? "Người lớn" : "Trẻ em")):</strong> @passenger.FullName <br />
+                            <strong>Giới tính:</strong> @(passenger.Gender == "M" ? "Nam" : passenger.Gender == "F" ? "Nữ" : passenger.Gender) <br />
+                            <strong>Ngày sinh:</strong> @(passenger.DateOfBirth.HasValue ? passenger.DateOfBirth.Value.ToString("dd/MM/yyyy") : "Không có") <br />
+                            <strong>Quốc tịch:</strong> @passenger.Nationality <br />
+                            <strong>Giấy tờ tùy thân:</strong> @passenger.IdType <br />
+                            <strong>Ngày hết hạn:</strong> @(passenger.IdExpiry.HasValue ? passenger.IdExpiry.Value.ToString("dd/MM/yyyy") : "Không có") <br />
+                            <strong>Quốc gia cấp:</strong> @passenger.IdCountry <br />
+                            <strong>Hành lý:</strong> @passenger.LuggageFee.ToString("N0") VNĐ
+                        </li>
+                    }
+                </ul>
+
+                <h5>Thông tin hóa đơn (nếu có)</h5>
+                @if (booking.InvoiceRequest)
+                {
+                    <p><strong>Công ty:</strong> @booking.CompanyName</p>
+                    <p><strong>Địa chỉ:</strong> @booking.CompanyAddress, @booking.CompanyCity</p>
+                    <p><strong>Mã số thuế:</strong> @booking.TaxCode</p>
+                    <p><strong>Người nhận:</strong> @booking.InvoiceRecipient</p>
+                    <p><strong>Số điện thoại:</strong> @booking.InvoicePhone</p>
+                    <p><strong>Email:</strong> @booking.InvoiceEmail</p>
+                }
+                else
+                {
+                    <p>Không yêu cầu hóa đơn.</p>
+                }
+            </div>
+        }
+
+        <!-- Phân trang -->
+        <div class="pagination">
+            @if (Model.CurrentPage > 1)
+            {
+                <a href="@Url.Action("ManageBookings", new { page = Model.CurrentPage - 1, pageSize = Model.PageSize })">« Trước</a>
+            }
+
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                <a href="@Url.Action("ManageBookings", new { page = i, pageSize = Model.PageSize })" class="@(i == Model.CurrentPage ? "active" : "")">@i</a>
+            }
+
+            @if (Model.CurrentPage < Model.TotalPages)
+            {
+                <a href="@Url.Action("ManageBookings", new { page = Model.CurrentPage + 1, pageSize = Model.PageSize })">Tiếp »</a>
+            }
+        </div>
+    }
+</div>

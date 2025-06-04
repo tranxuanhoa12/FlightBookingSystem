@@ -1,0 +1,251 @@
+﻿
+
+@model List<FlightBookingApp.Models.Users>
+
+@{
+    ViewData["Title"] = "Quản lý khách hàng";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<style>
+    @@keyframes fadeIn {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+
+    .fade-in {
+        animation: fadeIn 0.7s ease-out;
+    }
+
+    body {
+        background: #f4f7fa;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .custom-header {
+        background: linear-gradient(45deg, #007bff, #00c4ff);
+        color: white;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1.5rem;
+        text-align: center;
+    }
+
+    .table-container {
+        background: #fff;
+        padding: 1rem;
+        border-radius: 1rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    table tbody tr:hover {
+        background-color: #f2f2f2;
+        transition: background-color 0.3s ease;
+    }
+
+    .table thead.table-dark {
+        background-color: #343a40;
+    }
+
+        .table thead.table-dark th {
+            color: #fff;
+            font-weight: normal;
+        }
+
+    .password-cell {
+        width: 200px;
+    }
+
+    .input-group .form-control[readonly] {
+        pointer-events: none; /* cấm chỉnh sửa trực tiếp */
+    }
+
+    /* CSS cho dropdown role ẩn/hiện */
+    .role-dropdown, .btn-save-role, .btn-cancel-role {
+        display: none; /* ẩn mặc định, khi edit thì hiện */
+    }
+</style>
+
+<div class="container mt-4 fade-in">
+    <div class="custom-header">
+        <h2>Quản lý Khách Hàng</h2>
+    </div>
+
+    <div class="table-container">
+        @if (Model == null || !Model.Any())
+        {
+            <div class="alert alert-info">
+                Không có khách hàng nào để hiển thị.
+            </div>
+        }
+        else
+        {
+            <table class="table table-bordered table-striped align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th scope="col">UserId</th>
+                        <th scope="col">Họ và tên</th>
+                        <th scope="col">Email</th>
+                        <th scope="col">Số điện thoại</th>
+                        <th scope="col">Mật khẩu</th>
+                        <th scope="col">Vai trò</th>
+                        <th scope="col">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in Model)
+                    {
+                        <tr>
+                            <td>@user.UserId</td>
+                            <td>@user.FullName</td>
+                            <td>@user.Email</td>
+                            <td>@(string.IsNullOrEmpty(user.PhoneNumber) ? "Không có" : user.PhoneNumber)</td>
+                            <td class="password-cell">
+                                <div class="input-group">
+                                    <input type="password"
+                                           class="form-control"
+                                           id="pwd-@user.UserId"
+                                           value="@user.Password"
+                                           readonly />
+                                    <button class="btn btn-outline-secondary" type="button"
+                                            onclick="togglePassword('@user.UserId')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </td>
+                            <!-- Vai trò & Edit Inline -->
+                            <td>
+                                <!-- Nhãn hiển thị role hiện tại -->
+                                <span id="role-label-@user.UserId">@user.Role</span>
+
+                                <!-- Dropdown chọn role thay thế, mặc định ẩn -->
+                                <select id="role-select-@user.UserId" class="form-select role-dropdown">
+                                    <!-- Thêm các lựa chọn role tùy ý -->
+                                    <option value="Customer" selected>Customer</option>
+                                    <option value="Admin">Admin</option>
+                                    
+                                </select>
+                            </td>
+                            <td>
+                                <!-- Nút 'Cập nhật' để chuyển sang chế độ edit -->
+                                <button class="btn btn-primary" id="btn-edit-@user.UserId"
+                                        onclick="editRole(@user.UserId, '@user.Role')">
+                                    Cập nhật
+                                </button>
+
+                                <!-- Nút 'Lưu' và 'Hủy', mặc định ẩn -->
+                                <button class="btn btn-success btn-save-role" id="btn-save-@user.UserId"
+                                        onclick="saveRole(@user.UserId)">
+                                    Lưu
+                                </button>
+                                <button class="btn btn-secondary btn-cancel-role" id="btn-cancel-@user.UserId"
+                                        onclick="cancelEdit(@user.UserId)">
+                                    Hủy
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Ẩn/hiện mật khẩu
+        function togglePassword(userId) {
+            const pwdInput = document.getElementById(`pwd-${userId}`);
+            if (pwdInput.type === 'password') {
+                pwdInput.type = 'text';
+            } else {
+                pwdInput.type = 'password';
+            }
+        }
+
+        // Bắt đầu chế độ sửa Role
+        function editRole(userId, currentRole) {
+            // Ẩn label
+            document.getElementById(`role-label-${userId}`).style.display = 'none';
+
+            // Hiện dropdown
+            const roleSelect = document.getElementById(`role-select-${userId}`);
+            roleSelect.style.display = 'inline-block';
+            roleSelect.value = currentRole; // set lựa chọn trùng role hiện tại
+
+            // Hiện nút Lưu / Hủy
+            document.getElementById(`btn-save-${userId}`).style.display = 'inline-block';
+            document.getElementById(`btn-cancel-${userId}`).style.display = 'inline-block';
+
+            // Ẩn nút 'Cập nhật'
+            document.getElementById(`btn-edit-${userId}`).style.display = 'none';
+        }
+
+        // Hủy chỉnh sửa
+        function cancelEdit(userId) {
+            // Hiện label cũ
+            document.getElementById(`role-label-${userId}`).style.display = 'inline';
+
+            // Ẩn dropdown
+            document.getElementById(`role-select-${userId}`).style.display = 'none';
+
+            // Ẩn nút Lưu / Hủy
+            document.getElementById(`btn-save-${userId}`).style.display = 'none';
+            document.getElementById(`btn-cancel-${userId}`).style.display = 'none';
+
+            // Hiện nút 'Cập nhật'
+            document.getElementById(`btn-edit-${userId}`).style.display = 'inline-block';
+        }
+
+        // Lưu Role vào DB qua AJAX
+        function saveRole(userId) {
+            const roleSelect = document.getElementById(`role-select-${userId}`);
+            const newRole = roleSelect.value;
+
+                    const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+        fetch('@Url.Action("UpdateUserRole", "Admin")',
+        {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': token
+            },
+            body: JSON.stringify({
+                userId: userId,
+                newRole: newRole
+            })
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.message) {
+                    // Cập nhật giao diện
+                    document.getElementById(`role-label-${userId}`).textContent = newRole;
+                    cancelEdit(userId);
+                }
+                else {
+                    alert('Cập nhật thất bại!');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Có lỗi xảy ra khi cập nhật Role.');
+            });
+        }
+    </script>
+}

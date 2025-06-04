@@ -1,0 +1,63 @@
+﻿@{
+    ViewData["Title"] = "Thanh toán thành công";
+}
+
+<style>
+    body {
+        font-family: 'Arial', sans-serif;
+        background-color: #f4f4f9;
+        color: #333;
+        text-align: center;
+    }
+
+    .container {
+        max-width: 600px;
+        margin: 40px auto;
+        padding: 20px;
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+        color: #2c3e50;
+        margin-bottom: 20px;
+    }
+
+    .alert-success {
+        background-color: #d4edda;
+        color: #155724;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
+
+    .btn-complete {
+        background-color: #3498db;
+        color: #fff;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+        .btn-complete:hover {
+            background-color: #2980b9;
+        }
+</style>
+
+<div class="container">
+    <h2>Thanh toán thành công</h2>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert-success">
+            @TempData["Success"]
+        </div>
+    }
+
+    <p>Cảm ơn bạn đã thanh toán. Đặt vé của bạn đã được xác nhận.</p>
+    <a href="@Url.Action("Index", "Home")" class="btn-complete">Hoàn tất đặt vé</a>
+</div>

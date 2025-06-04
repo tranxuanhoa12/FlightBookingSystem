@@ -1,0 +1,400 @@
+﻿@model List<FlightBookingApp.Models.Flight>
+
+@{
+    ViewData["Title"] = "Search Results";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var departureAirport = ViewBag.DepartureAirport as FlightBookingApp.Models.Airport;
+    var destinationAirport = ViewBag.DestinationAirport as FlightBookingApp.Models.Airport;
+    var departureDate = ViewBag.DepartureDate as DateTime?;
+    var returnDate = ViewBag.ReturnDate as DateTime?;
+    var passengerCount = ViewBag.PassengerCount != null ? (int)ViewBag.PassengerCount : 0;
+    var adultCount = ViewBag.AdultCount != null ? (int)ViewBag.AdultCount : 0;
+    var childCount = ViewBag.ChildCount != null ? (int)ViewBag.ChildCount : 0;
+    var isRoundTrip = ViewBag.IsRoundTrip != null ? (bool)ViewBag.IsRoundTrip : false;
+    var returnFlights = ViewBag.ReturnFlights as List<FlightBookingApp.Models.Flight>;
+
+    // Sửa lỗi: Đảm bảo selectedDate là DateTime (không nullable)
+    var selectedDate = departureDate.HasValue ? departureDate.Value : DateTime.Today;
+    var startDate = selectedDate.AddDays(-3);
+    var days = Enumerable.Range(0, 7).Select(i => startDate.AddDays(i)).ToList();
+}
+
+<style>
+    .search-results-container {
+        max-width: 1200px;
+        width: 100%;
+        margin: 0 auto;
+        padding: 20px;
+        display: flex;
+        gap: 20px;
+    }
+
+    .sidebar {
+        width: 250px;
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .main-content {
+        flex: 1;
+    }
+
+    .search-bar {
+        background-color: #6f42c1;
+        padding: 15px;
+        border-radius: 8px;
+        color: white;
+        margin-bottom: 20px;
+    }
+
+        .search-bar .form-control {
+            background-color: white;
+            border: none;
+            border-radius: 5px;
+        }
+
+        .search-bar .btn-primary {
+            background-color: #ff69b4;
+            border: none;
+        }
+
+    .calendar {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+    }
+
+    .calendar-day {
+        flex: 1;
+        text-align: center;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        margin: 0 2px;
+        cursor: pointer;
+    }
+
+        .calendar-day.selected {
+            background-color: #ff69b4;
+            color: white;
+        }
+
+    .flight-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        background-color: #fff;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .airline-logo {
+        width: 40px;
+        height: 40px;
+        margin-right: 10px;
+    }
+
+    .flight-time {
+        font-size: 1.2em;
+        font-weight: bold;
+    }
+
+    .flight-duration {
+        color: #555;
+    }
+
+    .price {
+        font-size: 1.2em;
+        font-weight: bold;
+        color: #e67e22;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+        .price .error-icon {
+            color: red;
+            font-size: 1em;
+        }
+
+    .text-right {
+        text-align: right;
+    }
+
+    .filter-section {
+        margin-bottom: 20px;
+    }
+
+        .filter-section h5 {
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+
+    .btn-clear-filter {
+        background-color: #ff69b4;
+        color: white;
+        border: none;
+        padding: 10px;
+        border-radius: 5px;
+        width: 100%;
+        margin-top: 10px;
+    }
+</style>
+
+<div class="search-results-container">
+    <!-- Sidebar (Bộ lọc) -->
+    <div class="sidebar">
+        <h4>Hiện thị giá</h4>
+        <div class="filter-section">
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="priceType" id="includeTax" checked>
+                <label class="form-check-label" for="includeTax">Giá bao gồm thuế phí</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="priceType" id="excludeTax">
+                <label class="form-check-label" for="excludeTax">Giá chưa gồm thuế phí</label>
+            </div>
+        </div>
+
+        <div class="filter-section">
+            <h5>Sắp Xếp</h5>
+            <div class="form-check">
+                <input class="form-check-input sort-option" type="radio" name="sort" id="sortLowToHigh" value="priceLowToHigh" checked>
+                <label class="form-check-label" for="sortLowToHigh">Giá (Thấp tới Cao)</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input sort-option" type="radio" name="sort" id="sortByDepartureTime" value="departureTime">
+                <label class="form-check-label" for="sortByDepartureTime">Thời gian khởi hành</label>
+            </div>
+        </div>
+
+     
+        <div class="filter-section">
+            <h5>Hãng hàng không</h5>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="vietjetAir" checked>
+                <label class="form-check-label" for="vietjetAir">Vietjet Air</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="vietnamAirlines" checked>
+                <label class="form-check-label" for="vietnamAirlines">Vietnam Airlines</label>
+            </div>
+        </div>
+
+        <button class="btn-clear-filter">Xóa bộ lọc</button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content" style="margin-top:-70px;">
+        <!-- Thanh tìm kiếm -->
+        <div class="search-bar">
+            <form action="/Home/SearchFlights" method="post" class="d-flex gap-3 align-items-center">
+                @Html.AntiForgeryToken()
+                <div class="d-flex gap-2">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="tripType" id="oneWay" value="OneWay" @(isRoundTrip ? "" : "checked")>
+                        <label class="form-check-label" for="oneWay">Một chiều</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="tripType" id="roundTrip" value="RoundTrip" @(isRoundTrip ? "checked" : "")>
+                        <label class="form-check-label" for="roundTrip">Khứ hồi</label>
+                    </div>
+                </div>
+                <div class="flex-grow-1">
+                    <input type="text" class="form-control" value="@departureAirport?.City (@departureAirport?.IataCode)" readonly>
+                    <input type="hidden" name="fromIata" value="@departureAirport?.IataCode">
+                </div>
+                <div class="flex-grow-1">
+                    <input type="text" class="form-control" value="@destinationAirport?.City (@destinationAirport?.IataCode)" readonly>
+                    <input type="hidden" name="toIata" value="@destinationAirport?.IataCode">
+                </div>
+                <div class="flex-grow-1">
+                    <input type="date" class="form-control" name="departureDate" value="@departureDate?.ToString("yyyy-MM-dd")" required>
+                </div>
+                <div class="flex-grow-1">
+                    <input type="text" class="form-control" value="@passengerCount người lớn" readonly>
+                    <input type="hidden" name="adultCount" value="@adultCount">
+                    <input type="hidden" name="childCount" value="@childCount">
+                </div>
+                <button type="submit" class="btn btn-primary">Tìm kiếm</button>
+            </form>
+        </div>
+
+        <!-- Lịch chọn ngày -->
+        <div class="calendar" >
+            @foreach (var day in days)
+            {
+                var isSelected = day.Date == selectedDate.Date;
+                <div class="calendar-day @(isSelected ? "selected" : "")">
+                    <div>@day.ToString("ddd")</div>
+                    <div>@day.ToString("dd/MM")</div>
+                </div>
+            }
+        </div>
+
+        <!-- Danh sách chuyến bay -->
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger">
+                @TempData["Error"]
+            </div>
+        }
+
+        @if (Model == null || !Model.Any())
+        {
+            <p class="text-center text-danger">Không tìm thấy chuyến bay nào phù hợp.</p>
+        }
+        else
+        {
+            <h2>@departureAirport?.City, Việt Nam (@departureAirport?.IataCode) → @destinationAirport?.City, Việt Nam (@destinationAirport?.IataCode)</h2>
+            <p>@passengerCount Khách - @departureDate?.ToString("dd/MM/yyyy")</p>
+
+            <div class="outbound-flights">
+                @foreach (var flight in Model)
+                {
+                    <div class="flight-item">
+                        <div class="d-flex align-items-center">
+                            <img src="@(flight.Airline == "Vietjet Air" ? "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Vietjet_Air_logo.svg/1200px-Vietjet_Air_logo.svg.png" : "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Vietnam_Airlines_logo.svg/1200px-Vietnam_Airlines_logo.svg.png")" alt="@flight.Airline" class="airline-logo">
+                            <div>
+                                <span class="fw-bold">@flight.Airline</span><br>
+                                <small>@flight.FlightNumber Chi tiết</small>
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <span class="flight-time">@flight.DepartureTime.ToString("HH:mm")</span><br>
+                            <small>@flight.DepartureAirport.IataCode</small>
+                        </div>
+                        <div class="text-center flight-duration">
+                            @((flight.ArrivalTime - flight.DepartureTime).TotalHours.ToString("0"))h @((flight.ArrivalTime - flight.DepartureTime).Minutes)m<br>
+                            <small>Bay thẳng</small>
+                        </div>
+                        <div class="text-center">
+                            <span class="flight-time">@flight.ArrivalTime.ToString("HH:mm")</span><br>
+                            <small>@flight.DestinationAirport.IataCode</small>
+                        </div>
+                        <div class="text-right">
+                            <span class="price">
+                                @flight.Price.ToString("N0") VNĐ
+                                
+                            </span><br>
+                            <a href="@Url.Action("Book", "Home", new { flightId = flight.FlightId, passengerCount = passengerCount, adultCount = adultCount, childCount = childCount, isRoundTrip = isRoundTrip })" class="btn btn-primary">Chọn</a>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Chuyến bay về (nếu là khứ hồi) -->
+            @if (isRoundTrip && returnFlights != null && returnFlights.Any())
+            {
+                <h3 class="mt-4">Chuyến bay về: @destinationAirport?.City (@destinationAirport?.IataCode) → @departureAirport?.City (@departureAirport?.IataCode)</h3>
+                <p>Ngày về: @returnDate?.ToString("dd/MM/yyyy")</p>
+
+                <div class="return-flights">
+                    @foreach (var flight in returnFlights)
+                    {
+                        <div class="flight-item">
+                            <div class="d-flex align-items-center">
+                                <img src="@(flight.Airline == "Vietjet Air" ? "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Vietjet_Air_logo.svg/1200px-Vietjet_Air_logo.svg.png" : "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Vietnam_Airlines_logo.svg/1200px-Vietnam_Airlines_logo.svg.png")" alt="@flight.Airline" class="airline-logo">
+                                <div>
+                                    <span class="fw-bold">@flight.Airline</span><br>
+                                    <small>@flight.FlightNumber Chi tiết</small>
+                                </div>
+                            </div>
+                            <div class="text-center">
+                                <span class="flight-time">@flight.DepartureTime.ToString("HH:mm")</span><br>
+                                <small>@flight.DepartureAirport.IataCode</small>
+                            </div>
+                            <div class="text-center flight-duration">
+                                @((flight.ArrivalTime - flight.DepartureTime).TotalHours.ToString("0"))h @((flight.ArrivalTime - flight.DepartureTime).Minutes)m<br>
+                                <small>Bay thẳng</small>
+                            </div>
+                            <div class="text-center">
+                                <span class="flight-time">@flight.ArrivalTime.ToString("HH:mm")</span><br>
+                                <small>@flight.DestinationAirport.IataCode</small>
+                            </div>
+                            <div class="text-right">
+                                <span class="price">
+                                    @flight.Price.ToString("N0") VNĐ
+                                   
+                                </span><br>
+                                <a href="@Url.Action("Book", "Home", new { flightId = Model.First().FlightId, returnFlightId = flight.FlightId, passengerCount = passengerCount, adultCount = adultCount, childCount = childCount, isRoundTrip = isRoundTrip })" class="btn btn-primary">Chọn</a>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else if (isRoundTrip && (returnFlights == null || !returnFlights.Any()))
+            {
+                <p class="text-center text-danger mt-4">Không tìm thấy chuyến bay về phù hợp.</p>
+            }
+        }
+
+        <div class="text-center mt-4">
+            <a href="@Url.Action("Index", "Home")" class="btn btn-secondary">Quay lại tìm kiếm</a>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <script>
+        // Lấy tất cả các radio button sắp xếp
+        const sortOptions = document.querySelectorAll('.sort-option');
+
+        // Lấy danh sách chuyến bay đi và chuyến về
+        const outboundFlightsContainer = document.querySelector('.outbound-flights');
+        const returnFlightsContainer = document.querySelector('.return-flights');
+        let outboundFlightItems = Array.from(document.querySelectorAll('.outbound-flights .flight-item'));
+        let returnFlightItems = Array.from(document.querySelectorAll('.return-flights .flight-item'));
+
+        // Hàm để lấy giá trị giá từ phần tử flight-item
+        function getPrice(flightItem) {
+            const priceText = flightItem.querySelector('.price').textContent;
+            return parseFloat(priceText.replace(/[^0-9]/g, ''));
+        }
+
+        // Hàm để lấy thời gian khởi hành từ phần tử flight-item
+        function getDepartureTime(flightItem) {
+            const timeText = flightItem.querySelector('.flight-time').textContent;
+            const [hours, minutes] = timeText.split(':').map(Number);
+            return hours * 60 + minutes;
+        }
+
+        // Hàm sắp xếp danh sách chuyến bay
+        function sortFlights(sortType, flights) {
+            if (sortType === 'priceLowToHigh') {
+                flights.sort((a, b) => getPrice(a) - getPrice(b));
+            } else if (sortType === 'departureTime') {
+                flights.sort((a, b) => getDepartureTime(a) - getDepartureTime(b));
+            }
+        }
+
+        // Hàm hiển thị lại danh sách chuyến bay
+        function renderFlights(flights, container) {
+            if (!container) return;
+            container.innerHTML = '';
+            flights.forEach(flight => container.appendChild(flight));
+        }
+
+        // Gắn sự kiện cho các radio button
+        sortOptions.forEach(option => {
+            option.addEventListener('change', () => {
+                const sortType = option.value;
+
+                // Sắp xếp chuyến đi
+                sortFlights(sortType, outboundFlightItems);
+                renderFlights(outboundFlightItems, outboundFlightsContainer);
+
+                // Sắp xếp chuyến về (nếu có)
+                if (returnFlightItems.length > 0) {
+                    sortFlights(sortType, returnFlightItems);
+                    renderFlights(returnFlightItems, returnFlightsContainer);
+                }
+            });
+        });
+    </script>
+}

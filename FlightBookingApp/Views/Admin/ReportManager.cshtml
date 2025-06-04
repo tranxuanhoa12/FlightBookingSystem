@@ -1,0 +1,590 @@
+﻿@* ViewData và Layout *@
+@{
+    ViewData["Title"] = "Quản lý thông báo";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<style>
+    .result-box {
+        margin-top: 2rem;
+        background: #fff;
+        padding: 1rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    .loading-spinner {
+        display: none;
+        margin-left: 10px;
+    }
+
+        .loading-spinner.active {
+            display: inline-block;
+        }
+
+    .input-group {
+        position: relative;
+    }
+
+    .clear-btn {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        font-size: 1.2rem;
+        cursor: pointer;
+        color: #888;
+    }
+
+        .clear-btn:hover {
+            color: #000;
+        }
+
+    .email-warning {
+        color: #ff9800;
+        font-size: 0.9rem;
+        margin-top: 5px;
+    }
+
+    .progress-container {
+        margin-top: 10px;
+    }
+</style>
+
+<div class="container mt-4">
+    <h2>Thông Báo</h2>
+
+    <!-- Dropdown chọn nhanh FlightNumber -->
+    <div class="mb-3">
+        <label class="form-label" for="predefinedFlights">Chọn nhanh FlightNumber:</label>
+        <select class="form-select" id="predefinedFlights">
+            <option value="">--Chọn sẵn--</option>
+            <option value="A12357">A12357 - Buôn Ma Thuột</option>
+            <option value="VJ357">VJ357 - Buôn Ma Thuột</option>
+            <option value="AF3308">AF3308 - Buôn Ma Thuột</option>
+            <option value="A12774">A12774 - Cam Ranh</option>
+            <option value="VJ774">VJ774 - Cam Ranh</option>
+            <option value="VN1341">VN1341 - Cam Ranh</option>
+            <option value="AF3319">AF3319 - Đà Nẵng</option>
+            <option value="VN101">VN101 - Đà Nẵng</option>
+            <option value="VJ621">VJ621 - Đà Nẵng</option>
+            <option value="VJ363">VJ363 - Dalat</option>
+            <option value="VN1381">VN1381 - Dalat</option>
+            <option value="A12121">A12121 - Hà Nội</option>
+            <option value="VJ121">VJ121 - Hà Nội</option>
+            <option value="QH101">QH101 - Hà Nội</option>
+            <option value="VN1715">VN1715 - Hà Nội</option>
+            <option value="A12273">A12273 - Hải Phòng</option>
+            <option value="VJ273">VJ273 - Hải Phòng</option>
+            <option value="A12303">A12303 - Huế</option>
+            <option value="VJ303">VJ303 - Huế</option>
+            <option value="DV5324">DV5324 - Phú Quốc</option>
+            <option value="VJ322">VJ322 - Phú Quốc</option>
+            <option value="A12844">A12844 - Phú Quốc</option>
+            <option value="H15193">H15193 - Pleiku</option>
+            <option value="A12424">A12424 - Pleiku</option>
+            <option value="K63206">K63206 - TP. Hồ Chí Minh</option>
+            <option value="VJ228">VJ228 - TP. Hồ Chí Minh</option>
+        </select>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label for="flightNumber" class="form-label">Nhập FlightNumber:</label>
+            <div class="input-group">
+                <input type="text" id="flightNumber" class="form-control" placeholder="VD: VN123" />
+                <button type="button" class="clear-btn" id="clearInput" title="Xóa">×</button>
+            </div>
+        </div>
+        <div class="col-md-6 d-flex align-items-end">
+            <button class="btn btn-primary" id="btnSearch" style="margin-left:10px;">
+                Tìm
+                <span class="spinner-border spinner-border-sm loading-spinner" id="searchSpinner"></span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Hiển thị kết quả tìm kiếm -->
+    <div id="searchResult" class="result-box hidden">
+        <h4>Kết quả tìm kiếm</h4>
+        <div id="flightList"></div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Hàm giới hạn số lượng yêu cầu đồng thời
+        function pLimit(concurrency) {
+            let active = 0;
+            const queue = [];
+
+            async function next() {
+                if (active >= concurrency || queue.length === 0) return;
+                active++;
+                const { fn, resolve, reject } = queue.shift();
+                try {
+                    const result = await fn();
+                    resolve(result);
+                } catch (err) {
+                    reject(err);
+                } finally {
+                    active--;
+                    next();
+                }
+            }
+
+            return (fn) => new Promise((resolve, reject) => {
+                queue.push({ fn, resolve, reject });
+                next();
+            });
+        }
+
+        let currentFlightId = 0; // Lưu flightId của chuyến bay được chọn để gửi thông báo delay
+
+        // Khi chọn nhanh từ dropdown, tự động điền vào ô flightNumber
+        document.getElementById('predefinedFlights').addEventListener('change', function () {
+            const chosenVal = this.value;
+            document.getElementById('flightNumber').value = chosenVal;
+            toggleClearButton();
+        });
+
+        // Hiển thị/ẩn nút xóa dựa trên nội dung ô nhập
+        function toggleClearButton() {
+            const flightNumberInput = document.getElementById('flightNumber');
+            const clearBtn = document.getElementById('clearInput');
+            clearBtn.style.display = flightNumberInput.value.trim() ? 'block' : 'none';
+        }
+
+        // Khi nhập vào ô flightNumber, cập nhật trạng thái nút xóa
+        document.getElementById('flightNumber').addEventListener('input', toggleClearButton);
+
+        // Khi nhấn nút xóa, làm mới giao diện
+        document.getElementById('clearInput').addEventListener('click', function () {
+            document.getElementById('flightNumber').value = '';
+            document.getElementById('predefinedFlights').value = '';
+            document.getElementById('searchResult').classList.add('hidden');
+            currentFlightId = 0;
+            toggleClearButton();
+        });
+
+        // Hàm hiển thị thông tin tất cả các chuyến bay
+        function displayFlightDetails(flights) {
+            document.getElementById('searchResult').classList.remove('hidden');
+            const flightList = document.getElementById('flightList');
+            let html = '';
+
+            flights.forEach(flight => {
+                html += `
+                    <div class="mb-4">
+                        <h5>${flight.flightNumber} (${flight.route})</h5>
+                        <p>Trạng thái: ${flight.status}</p>
+                        <p>FlightId: ${flight.flightId}</p>
+                        <p>Departure Airport: ${flight.departureAirport || 'Không có thông tin'}</p>
+                        <p>Destination Airport: ${flight.destinationAirport || 'Không có thông tin'}</p>
+                        <p>Departure Time: ${flight.outboundTime || 'Không có thông tin'}</p>
+                        <p>Return Time: ${flight.returnTime || 'Không có thông tin'}</p>
+                        <p>Tổng số Booking: ${flight.totalBookings}</p>
+                        <h6>Danh sách Booking:</h6>
+                        <table class="table table-bordered table-striped">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>BookingId</th>
+                                    <th>ContactName</th>
+                                    <th>ContactEmail</th>
+                                    <th>Số khách (Passengers)</th>
+                                    <th>Thao tác <input type="checkbox" id="selectAll-${flight.flightId}" class="selectAll" data-flightid="${flight.flightId}"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+                if (flight.bookings.length === 0) {
+                    html += `<tr><td colspan="5" class="text-center">Không có booking nào. Email sẽ không được gửi.</td></tr>`;
+                } else {
+                    flight.bookings.forEach(b => {
+                        html += `
+                            <tr>
+                                <td>${b.bookingId}</td>
+                                <td>${b.contactName}</td>
+                                <td>${b.contactEmail || 'Không có email'}</td>
+                                <td>${b.passengerCount}</td>
+                                <td>
+                                    <input type="checkbox" class="emailCheckbox" data-flightid="${flight.flightId}" data-email="${b.contactEmail}" data-contactname="${b.contactName}">
+                                    
+                                </td>
+                            </tr>
+                        `;
+                    });
+                }
+
+                html += `
+                            </tbody>
+                        </table>
+                        <div class="mb-3">
+                            <label class="form-label">Nhập số phút delay cho chuyến bay ${flight.flightNumber} (FlightId: ${flight.flightId}):</label>
+                            <input type="number" class="form-control delayMinutes" data-flightid="${flight.flightId}" style="width:200px;" min="1" />
+                            
+                        </div>
+                       
+                        <button class="btn btn-success btnSendSelectedEmails" data-flightid="${flight.flightId}">
+                            Gửi thông báo
+                            <span class="spinner-border spinner-border-sm loading-spinner"></span>
+                        </button>
+                        <div class="progress-container hidden" id="progress-${flight.flightId}">
+                            <div class="progress">
+                                <div class="progress-bar" role="progressbar" style="width: 0%;" id="progressBar-${flight.flightId}">0%</div>
+                            </div>
+                            <p id="progressText-${flight.flightId}">Đã gửi: 0 / 0</p>
+                        </div>
+                        <hr />
+                    </div>
+                `;
+            });
+
+            flightList.innerHTML = html;
+
+            // Thêm sự kiện cho các nút "Gửi thông báo Delay"
+            document.querySelectorAll('.btnSendDelay').forEach(button => {
+                button.addEventListener('click', function () {
+                    const flightId = this.getAttribute('data-flightid');
+                    const delayInput = document.querySelector(`.delayMinutes[data-flightid="${flightId}"]`);
+                    const delay = parseInt(delayInput.value) || 0;
+
+                    if (delay <= 0) {
+                        showError('Vui lòng nhập số phút delay > 0');
+                        return;
+                    }
+                    if (!confirm(`Xác nhận gửi thông báo delay ${delay} phút cho chuyến bay FlightId: ${flightId}?`)) {
+                        return;
+                    }
+
+                    const delaySpinner = this.querySelector('.loading-spinner');
+                    delaySpinner.classList.add('active');
+                    this.disabled = true;
+
+                    const requestData = { flightId: parseInt(flightId), delayMinutes: delay };
+                    console.log('Sending delay notification:', requestData);
+
+                    fetch('@Url.Action("SendDelayNotification", "Admin")', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(requestData),
+                        signal: AbortSignal.timeout(10000)
+                    })
+                    .then(res => {
+                        console.log('Response status from SendDelayNotification:', res.status);
+                        if (!res.ok) {
+                            return res.text().then(text => {
+                                throw new Error(`HTTP error! Status: ${res.status}, Response: ${text}`);
+                            });
+                        }
+                        return res.json();
+                    })
+                    .then(data => {
+                        delaySpinner.classList.remove('active');
+                        this.disabled = false;
+                        console.log('Response from SendDelayNotification:', data);
+                        if (data.success) {
+                            const successDiv = document.createElement('div');
+                            successDiv.className = 'alert alert-success alert-dismissible fade show';
+                            successDiv.role = 'alert';
+                            successDiv.innerHTML = `
+                                ${data.message}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            `;
+                            document.querySelector('.container').prepend(successDiv);
+                            setTimeout(() => successDiv.remove(), 5000);
+                        } else {
+                            showError(data.message);
+                        }
+                    })
+                    .catch(err => {
+                        delaySpinner.classList.remove('active');
+                        this.disabled = false;
+                        console.error('Error in SendDelayNotification:', err);
+                        showError('Có lỗi xảy ra khi gửi thông báo delay: ' + err.message);
+                    });
+                });
+            });
+
+            // Thêm sự kiện cho các nút "Gửi email thử"
+            document.querySelectorAll('.btnTestEmail').forEach(button => {
+                button.addEventListener('click', function () {
+                    const email = this.getAttribute('data-email');
+                    const flightId = this.getAttribute('data-flightid');
+                    if (!flightId || isNaN(parseInt(flightId)) || parseInt(flightId) === 0) {
+                        showError('FlightId không hợp lệ. Vui lòng thử lại.');
+                        return;
+                    }
+
+                    const delayInput = document.querySelector(`.delayMinutes[data-flightid="${flightId}"]`);
+                    if (!delayInput) {
+                        showError('Không tìm thấy ô nhập số phút delay. Vui lòng thử lại.');
+                        return;
+                    }
+                    const delayMinutes = parseInt(delayInput.value) || 0;
+
+                    if (!email || email === 'Không có email') {
+                        showError('Email không hợp lệ để gửi thử.');
+                        return;
+                    }
+                    if (delayMinutes <= 0) {
+                        showError('Vui lòng nhập số phút delay > 0 để gửi email thử.');
+                        return;
+                    }
+                    if (!confirm(`Xác nhận gửi email thử đến ${email} với thông báo delay ${delayMinutes} phút?`)) {
+                        return;
+                    }
+
+                    const testSpinner = this.querySelector('.loading-spinner');
+                    testSpinner.classList.add('active');
+                    this.disabled = true;
+
+                    console.log('Sending test email to:', email, 'FlightId:', flightId, 'DelayMinutes:', delayMinutes);
+
+                    fetch('@Url.Action("SendTestEmail", "Admin")', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: email, flightId: parseInt(flightId), delayMinutes: delayMinutes }),
+                        signal: AbortSignal.timeout(10000)
+                    })
+                    .then(res => {
+                        console.log('Response status from SendTestEmail:', res.status);
+                        if (!res.ok) {
+                            return res.text().then(text => {
+                                throw new Error(`HTTP error! Status: ${res.status}, Response: ${text}`);
+                            });
+                        }
+                        return res.json();
+                    })
+                    .then(data => {
+                        testSpinner.classList.remove('active');
+                        this.disabled = false;
+                        console.log('Response from SendTestEmail:', data);
+                        if (data.success) {
+                            const successDiv = document.createElement('div');
+                            successDiv.className = 'alert alert-success alert-dismissible fade show';
+                            successDiv.role = 'alert';
+                            successDiv.innerHTML = `
+                                ${data.message}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            `;
+                            document.querySelector('.container').prepend(successDiv);
+                            setTimeout(() => successDiv.remove(), 5000);
+                        } else {
+                            showError(data.message);
+                        }
+                    })
+                    .catch(err => {
+                        testSpinner.classList.remove('active');
+                        this.disabled = false;
+                        console.error('Error in SendTestEmail:', err);
+                        showError('Có lỗi xảy ra khi gửi email thử: ' + err.message);
+                    });
+                });
+            });
+
+            // Thêm sự kiện cho checkbox "Chọn tất cả"
+            document.querySelectorAll('.selectAll').forEach(checkbox => {
+                checkbox.addEventListener('change', function () {
+                    const flightId = this.getAttribute('data-flightid');
+                    const checkboxes = document.querySelectorAll(`.emailCheckbox[data-flightid="${flightId}"]`);
+                    checkboxes.forEach(cb => {
+                        cb.checked = this.checked;
+                    });
+                });
+            });
+
+            // Thêm sự kiện cho nút "Gửi email đã chọn"
+            document.querySelectorAll('.btnSendSelectedEmails').forEach(button => {
+                button.addEventListener('click', async function () {
+                    const flightId = this.getAttribute('data-flightid');
+                    if (!flightId || isNaN(parseInt(flightId)) || parseInt(flightId) === 0) {
+                        showError('FlightId không hợp lệ. Vui lòng thử lại.');
+                        return;
+                    }
+
+                    const delayInput = document.querySelector(`.delayMinutes[data-flightid="${flightId}"]`);
+                    if (!delayInput) {
+                        showError('Không tìm thấy ô nhập số phút delay. Vui lòng thử lại.');
+                        return;
+                    }
+                    const delay = parseInt(delayInput.value) || 0;
+
+                    if (delay <= 0) {
+                        showError('Vui lòng nhập số phút delay > 0');
+                        return;
+                    }
+
+                    const checkboxes = document.querySelectorAll(`.emailCheckbox[data-flightid="${flightId}"]:checked`);
+                    if (checkboxes.length === 0) {
+                        showError('Vui lòng chọn ít nhất một email để gửi.');
+                        return;
+                    }
+
+                    if (!confirm(`Xác nhận gửi thông báo delay ${delay} phút đến ${checkboxes.length} email đã chọn?`)) {
+                        return;
+                    }
+
+                    const sendSpinner = this.querySelector('.loading-spinner');
+                    sendSpinner.classList.add('active');
+                    this.disabled = true;
+
+                    const progressContainer = document.getElementById(`progress-${flightId}`);
+                    const progressBar = document.getElementById(`progressBar-${flightId}`);
+                    const progressText = document.getElementById(`progressText-${flightId}`);
+                    progressContainer.classList.remove('hidden');
+
+                    const emailsToSend = Array.from(checkboxes).map(cb => ({
+                        email: cb.getAttribute('data-email'),
+                        contactName: cb.getAttribute('data-contactname')
+                    }));
+
+                    let successfulEmails = 0;
+                    let sentEmails = 0;
+                    const totalEmails = emailsToSend.length;
+
+                    const updateProgress = () => {
+                        const percentage = Math.round((sentEmails / totalEmails) * 100);
+                        progressBar.style.width = `${percentage}%`;
+                        progressBar.textContent = `${percentage}%`;
+                        progressText.textContent = `Đã gửi: ${sentEmails} / ${totalEmails}`;
+                    };
+
+                    const limit = pLimit(3); // Giới hạn 3 yêu cầu đồng thời
+                    const sendPromises = emailsToSend.map(item => limit(async () => {
+                        if (!item.email || item.email === 'Không có email') {
+                            sentEmails++;
+                            updateProgress();
+                            return;
+                        }
+
+                        try {
+                            console.log('Sending email to:', item.email, 'FlightId:', flightId, 'DelayMinutes:', delay);
+                            const res = await fetch('@Url.Action("SendTestEmail", "Admin")', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ email: item.email, flightId: parseInt(flightId), delayMinutes: delay }),
+                                signal: AbortSignal.timeout(10000)
+                            });
+
+                            console.log('Response status from SendTestEmail (SendSelectedEmails):', res.status);
+                            if (!res.ok) {
+                                return res.text().then(text => {
+                                    throw new Error(`HTTP error! Status: ${res.status}, Response: ${text}`);
+                                });
+                            }
+
+                            const data = await res.json();
+                            console.log('Response from SendTestEmail (SendSelectedEmails):', data);
+                            if (data.success) {
+                                successfulEmails++;
+                            } else {
+                                console.error(`Failed to send email to ${item.email}: ${data.message}`);
+                            }
+                        } catch (err) {
+                            console.error(`Error sending email to ${item.email}: ${err.message}`);
+                        } finally {
+                            sentEmails++;
+                            updateProgress();
+                        }
+                    }));
+
+                    try {
+                        await Promise.all(sendPromises);
+                        sendSpinner.classList.remove('active');
+                        this.disabled = false;
+                        progressContainer.classList.add('hidden');
+                        if (successfulEmails > 0) {
+                            const successDiv = document.createElement('div');
+                            successDiv.className = 'alert alert-success alert-dismissible fade show';
+                            successDiv.role = 'alert';
+                            successDiv.innerHTML = `
+                                Đã gửi thông báo delay thành công đến ${successfulEmails} email!
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            `;
+                            document.querySelector('.container').prepend(successDiv);
+                            setTimeout(() => successDiv.remove(), 5000);
+                        } else {
+                            showError('Không có email nào được gửi thành công. Vui lòng kiểm tra log để biết thêm chi tiết.');
+                        }
+                    } catch (err) {
+                        sendSpinner.classList.remove('active');
+                        this.disabled = false;
+                        progressContainer.classList.add('hidden');
+                        console.error('Error in SendSelectedEmails:', err);
+                        showError('Có lỗi xảy ra khi gửi email: ' + err.message);
+                    }
+                });
+            });
+        }
+
+        // Hàm hiển thị thông báo lỗi
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'alert alert-danger alert-dismissible fade show';
+            errorDiv.role = 'alert';
+            errorDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            document.querySelector('.container').prepend(errorDiv);
+            setTimeout(() => errorDiv.remove(), 5000);
+        }
+
+        document.getElementById('btnSearch').addEventListener('click', function () {
+            const flightNo = document.getElementById('flightNumber').value.trim().toUpperCase();
+            if (!flightNo) {
+                showError('Vui lòng nhập FlightNumber hoặc chọn sẵn');
+                return;
+            }
+
+            const searchSpinner = document.getElementById('searchSpinner');
+            searchSpinner.classList.add('active');
+            this.disabled = true;
+
+            fetch('@Url.Action("SearchFlight", "Admin")', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ flightNumber: flightNo }),
+                signal: AbortSignal.timeout(60000)
+            })
+            .then(res => {
+                console.log('Response status from SearchFlight:', res.status);
+                if (!res.ok) {
+                    return res.text().then(text => {
+                        throw new Error(`HTTP error! Status: ${res.status}, Response: ${text}`);
+                    });
+                }
+                return res.json();
+            })
+            .then(data => {
+                searchSpinner.classList.remove('active');
+                this.disabled = false;
+                console.log('Response from SearchFlight:', data);
+                if (data.success) {
+                    // Hiển thị thông tin tất cả các chuyến bay
+                    displayFlightDetails(data.flights);
+                } else {
+                    showError(data.message);
+                    document.getElementById('searchResult').classList.add('hidden');
+                }
+            })
+            .catch(err => {
+                searchSpinner.classList.remove('active');
+                this.disabled = false;
+                console.error('Error in SearchFlight:', err);
+                showError('Có lỗi xảy ra khi tìm chuyến bay: ' + err.message);
+            });
+        });
+
+        // Khởi tạo trạng thái ban đầu của nút xóa
+        toggleClearButton();
+    </script>
+}

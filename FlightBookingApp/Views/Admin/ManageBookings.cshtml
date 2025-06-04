@@ -1,0 +1,289 @@
+﻿@model FlightBookingApp.ViewModel.ManageBookingsViewModel
+
+@{
+    ViewData["Title"] = "Quản Lý Đặt Vé";
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        body {
+            background-color: #f4f7fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .page-header {
+            background: linear-gradient(90deg, #007bff, #00c4ff);
+            color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .booking-table {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+            .booking-table th {
+                background-color: #007bff;
+                color: white;
+            }
+
+            .booking-table td {
+                vertical-align: middle;
+            }
+
+        .btn-details {
+            background-color: #28a745;
+            color: white;
+            border: none;
+        }
+
+            .btn-details:hover {
+                background-color: #218838;
+            }
+
+        .modal-header {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .pagination {
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+            .pagination .page-item.active .page-link {
+                background-color: #007bff;
+                border-color: #007bff;
+            }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <!-- Header -->
+        <div class="page-header">
+            <h1>Quản Lý Đặt Vé</h1>
+            <p>Danh sách tất cả các đặt vé của người dùng</p>
+            <div class="d-flex justify-content-center mt-3">
+                <a class="nav-link text-white" asp-action="Index" asp-controller="Admin">Thống Kê</a>
+                <a class="nav-link text-white" asp-action="ManageBookings" asp-controller="Admin">Quản Lý Đặt Vé</a>
+                <a class="nav-link text-white" asp-action="Data" asp-controller="Admin">Danh Sách Chuyến Bay</a>
+                <a class="nav-link text-white" asp-action="Logout" asp-controller="Admin">Đăng Xuất</a>
+            </div>
+        </div>
+
+        <!-- Hiển thị thông báo nếu có -->
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger" role="alert">
+                @TempData["ErrorMessage"]
+            </div>
+        }
+        @if (TempData["InfoMessage"] != null)
+        {
+            <div class="alert alert-info" role="alert">
+                @TempData["InfoMessage"]
+            </div>
+        }
+
+        <!-- Bảng danh sách đặt vé -->
+        <div class="booking-table">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Mã Đặt Vé</th>
+                        <th>Người Liên Hệ</th>
+                        <th>Email</th>
+                        <th>Chuyến Bay Đi</th>
+                        <th>Chuyến Bay Về</th>
+                        <th>Ngày Đặt</th>
+                        <th>Tổng Giá</th>
+                        <th>Trạng Thái</th>
+                        <th>Số Hành Khách</th>
+                        <th>Yêu Cầu Hóa Đơn</th>
+                        <th>Chi Tiết</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var booking in Model.Bookings)
+                    {
+                        <tr>
+                            <td>@booking.BookingId</td>
+                            <td>@booking.ContactName</td>
+                            <td>@booking.ContactEmail</td>
+                            <td>
+                                @if (booking.OutboundFlight != null)
+                                {
+                                    <span>@booking.OutboundFlight.FlightNumber (@booking.OutboundFlight.DepartureAirport?.City -> @booking.OutboundFlight.DestinationAirport?.City)</span>
+                                    <br />
+                                    <small>@booking.OutboundFlight.DepartureTime.ToString("dd/MM/yyyy HH:mm")</small>
+                                }
+                                else
+                                {
+                                    <span>Không có</span>
+                                }
+                            </td>
+                            <td>
+                                @if (booking.ReturnFlight != null)
+                                {
+                                    <span>@booking.ReturnFlight.FlightNumber (@booking.ReturnFlight.DepartureAirport?.City -> @booking.ReturnFlight.DestinationAirport?.City)</span>
+                                    <br />
+                                    <small>@booking.ReturnFlight.DepartureTime.ToString("dd/MM/yyyy HH:mm")</small>
+                                }
+                                else
+                                {
+                                    <span>Không có</span>
+                                }
+                            </td>
+                            <td>@booking.BookingDate.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>@booking.TotalPrice.ToString("N0") VNĐ</td>
+                            <td>@booking.PaymentStatus</td>
+                            <td>@booking.Passengers.Count</td>
+                            <td>@(booking.InvoiceRequest ? "Có" : "Không")</td>
+                            <td>
+                                <button type="button" class="btn btn-details btn-sm" data-bs-toggle="modal" data-bs-target="#detailsModal-@booking.BookingId">
+                                    <i class="fas fa-eye"></i> Xem
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Phân trang -->
+        <nav aria-label="Page navigation">
+            <ul class="pagination">
+                <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                    <a class="page-link" asp-action="ManageBookings" asp-route-page="@(Model.CurrentPage - 1)" asp-route-pageSize="@Model.PageSize">Trước</a>
+                </li>
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    <li class="page-item @(Model.CurrentPage == i ? "active" : "")">
+                        <a class="page-link" asp-action="ManageBookings" asp-route-page="@i" asp-route-pageSize="@Model.PageSize">@i</a>
+                    </li>
+                }
+                <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                    <a class="page-link" asp-action="ManageBookings" asp-route-page="@(Model.CurrentPage + 1)" asp-route-pageSize="@Model.PageSize">Sau</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+
+    <!-- Modal hiển thị chi tiết đặt vé -->
+    @foreach (var booking in Model.Bookings)
+    {
+        <div class="modal fade" id="detailsModal-@booking.BookingId" tabindex="-1" aria-labelledby="detailsModalLabel-@booking.BookingId" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="detailsModalLabel-@booking.BookingId">Chi Tiết Đặt Vé - Mã: @booking.BookingId</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <h6>Thông Tin Liên Hệ</h6>
+                        <p><strong>Tên:</strong> @booking.ContactName</p>
+                        <p><strong>Email:</strong> @booking.ContactEmail</p>
+                        <p><strong>Điện Thoại:</strong> @booking.ContactPhone</p>
+                        <p><strong>Giới Tính:</strong> @booking.ContactGender</p>
+
+                        <h6>Thông Tin Chuyến Bay</h6>
+                        <p>
+                            <strong>Chuyến Bay Đi:</strong>
+                            @if (booking.OutboundFlight != null)
+                            {
+                                <span>@booking.OutboundFlight.FlightNumber (@booking.OutboundFlight.DepartureAirport?.City -> @booking.OutboundFlight.DestinationAirport?.City) - @booking.OutboundFlight.DepartureTime.ToString("dd/MM/yyyy HH:mm")</span>
+                            }
+                            else
+                            {
+                                <span>Không có</span>
+                            }
+                        </p>
+                        <p>
+                            <strong>Chuyến Bay Về:</strong>
+                            @if (booking.ReturnFlight != null)
+                            {
+                                <span>@booking.ReturnFlight.FlightNumber (@booking.ReturnFlight.DepartureAirport?.City -> @booking.ReturnFlight.DestinationAirport?.City) - @booking.ReturnFlight.DepartureTime.ToString("dd/MM/yyyy HH:mm")</span>
+                            }
+                            else
+                            {
+                                <span>Không có</span>
+                            }
+                        </p>
+
+                        <h6>Danh Sách Hành Khách</h6>
+                        @if (booking.Passengers.Any())
+                        {
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Họ Tên</th>
+                                        <th>Giới Tính</th>
+                                        <th>Ngày Sinh</th>
+                                        <th>Quốc Tịch</th>
+                                        <th>Loại Giấy Tờ</th>
+                                        <th>Phí Hành Lý</th>
+                                        <th>Loại Hành Khách</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var passenger in booking.Passengers)
+                                    {
+                                        <tr>
+                                            <td>@passenger.FullName</td>
+                                            <td>@passenger.Gender</td>
+                                            <td>@(passenger.DateOfBirth.HasValue ? passenger.DateOfBirth.Value.ToString("dd/MM/yyyy") : "N/A")</td>
+                                            <td>@passenger.Nationality</td>
+                                            <td>@passenger.IdType</td>
+                                            <td>@passenger.LuggageFee.ToString("N0") VNĐ</td>
+                                            <td>@(passenger.IsAdult ? "Người Lớn" : "Trẻ Em")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                        else
+                        {
+                            <p>Không có hành khách nào trong đặt vé này.</p>
+                        }
+
+                        <h6>Thông Tin Hóa Đơn</h6>
+                        @if (booking.InvoiceRequest)
+                        {
+                            <p><strong>Tên Công Ty:</strong> @(booking.CompanyName ?? "N/A")</p>
+                            <p><strong>Địa Chỉ:</strong> @(booking.CompanyAddress ?? "N/A")</p>
+                            <p><strong>Thành Phố:</strong> @(booking.CompanyCity ?? "N/A")</p>
+                            <p><strong>Mã Số Thuế:</strong> @(booking.TaxCode ?? "N/A")</p>
+                            <p><strong>Người Nhận Hóa Đơn:</strong> @(booking.InvoiceRecipient ?? "N/A")</p>
+                            <p><strong>Điện Thoại:</strong> @(booking.InvoicePhone ?? "N/A")</p>
+                            <p><strong>Email:</strong> @(booking.InvoiceEmail ?? "N/A")</p>
+                        }
+                        else
+                        {
+                            <p>Không yêu cầu hóa đơn.</p>
+                        }
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Bootstrap JS and Popper.js -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

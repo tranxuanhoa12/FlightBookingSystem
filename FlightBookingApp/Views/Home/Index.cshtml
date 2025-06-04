@@ -1,0 +1,579 @@
+﻿@{
+    ViewData["Title"] = "Trang Chủ";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .hero-section {
+        position: relative;
+        z-index: 2;
+    }
+
+    .video-container {
+        position: relative;
+        width: 100%;
+        height: 80vh;
+        overflow: hidden;
+    }
+
+        .video-container video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+    /* Form tìm kiếm ban đầu đặt ở vị trí xác định */
+    .search-form-container {
+        position: absolute;
+        top: 75%; /* Ban đầu form nằm ở vị trí này */
+        left: 50%;
+        transform: translate(-50%, -50%);
+        transition: top 0.5s ease-in-out, transform 0.5s ease-in-out;
+        z-index: 3;
+        max-width: 700px; /* Giảm từ 1000px xuống 600px */
+        width: 65%; /* Giảm từ 80% xuống 60% */
+    }
+
+        /* Khi kéo xuống, thêm class "scrolled" */
+        .search-form-container.scrolled {
+            top: calc(80vh + 32vh); /* 80vh là chiều cao video + khoảng dưới video */
+            transform: translate(-50%, 0);
+        }
+
+    .error-message, .success-message {
+        margin-bottom: 20px;
+    }
+
+    .ui-autocomplete {
+        max-height: 200px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        z-index: 1000 !important;
+    }
+
+    .invalid-feedback {
+        display: none;
+        color: #dc3545;
+        font-size: 0.875em;
+        margin-top: 0.25rem;
+    }
+
+    .is-invalid ~ .invalid-feedback {
+        display: block;
+    }
+</style>
+
+<!-- Hero Section -->
+<div class="hero-section bg-white text-center py-5">
+    <div class="container" style="margin-top:-70px;">
+        <h1 class="display-5 fw-bold">Discover The World</h1>
+        <p class="lead text-muted">Book flights anytime - anywhere</p>
+    </div>
+</div>
+
+<!-- Video Container -->
+<div class="video-container">
+    <video class="Home_bg-video__PU78L" src="~/image/Travel.mp4" autoplay muted playsinline loop></video>
+</div>
+
+<!-- Search Form -->
+<div class="search-form-container">
+    <div class="card shadow p-3">
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger error-message">
+                @TempData["Error"]
+            </div>
+        }
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success success-message">
+                @TempData["Success"]
+            </div>
+        }
+
+        <form action="/Home/SearchFlights" method="post" id="searchForm">
+            @Html.AntiForgeryToken() <!-- Thêm antiforgery token -->
+            <!-- Chọn Khứ hồi / 1 Chiều -->
+            <div class="d-flex justify-content-center mb-3">
+                <div class="form-check me-3">
+                    <input class="form-check-input" type="radio" name="tripType" id="roundTrip" value="RoundTrip" checked>
+                    <label class="form-check-label fw-semibold" for="roundTrip">Khứ Hồi</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="tripType" id="oneWay" value="OneWay">
+                    <label class="form-check-label fw-semibold" for="oneWay">1 Chiều</label>
+                </div>
+            </div>
+
+            <!-- Các trường nhập liệu -->
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label for="from" class="form-label fw-semibold">Nơi Đi</label>
+                    <input type="text" class="form-control" id="from" name="from" placeholder="Nhập nơi đi" required>
+                    <input type="hidden" id="fromIata" name="fromIata" required />
+                    <div class="invalid-feedback" id="fromIataError">Vui lòng chọn sân bay đi từ danh sách gợi ý.</div>
+                </div>
+                <div class="col-md-6">
+                    <label for="to" class="form-label fw-semibold">Nơi Đến</label>
+                    <input type="text" class="form-control" id="to" name="to" placeholder="Nhập nơi đến" required>
+                    <input type="hidden" id="toIata" name="toIata" required />
+                    <div class="invalid-feedback" id="toIataError">Vui lòng chọn sân bay đến từ danh sách gợi ý.</div>
+                </div>
+            </div>
+
+            <div class="row g-3 mt-3">
+                <div class="col-md-4">
+                    <label for="departureDate" class="form-label fw-semibold">Ngày Đi</label>
+                    <input type="date" class="form-control" id="departureDate" name="departureDate" required>
+                </div>
+                <div class="col-md-4" id="returnDateContainer">
+                    <label for="returnDate" class="form-label fw-semibold">Ngày Về</label>
+                    <input type="date" class="form-control" id="returnDate" name="returnDate">
+                </div>
+                <div class="col-md-4 position-relative">
+                    <label class="form-label fw-semibold" for="passengerToggle">Số Lượng Khách</label>
+                    <div class="position-relative">
+                        <button class="btn btn-outline-secondary w-100 d-flex justify-content-between align-items-center"
+                                type="button" id="passengerToggle"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                            <span id="passengerLabel">1 người lớn</span>
+                            <i class="bi bi-caret-down-fill"></i>
+                        </button>
+                        <div class="dropdown-menu p-3" aria-labelledby="passengerToggle" style="min-width: 250px;">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <div>
+                                    <strong>Người lớn</strong><br>
+                                    <small class="text-muted">Từ 16 tuổi</small>
+                                </div>
+                                <div class="input-group">
+                                    <button class="btn btn-outline-secondary" type="button" id="adultMinus">-</button>
+                                    <input type="text" class="form-control text-center" value="1" id="adultCount" name="adultCount" readonly>
+                                    <button class="btn btn-outline-secondary" type="button" id="adultPlus">+</button>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <div>
+                                    <strong>Trẻ em</strong><br>
+                                    <small class="text-muted">0 - 16 tuổi</small>
+                                </div>
+                                <div class="input-group">
+                                    <button class="btn btn-outline-secondary" type="button" id="childMinus">-</button>
+                                    <input type="text" class="form-control text-center" value="0" id="childCount" name="childCount" readonly>
+                                    <button class="btn btn-outline-secondary" type="button" id="childPlus">+</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-4">
+                <button type="submit" class="btn btn-primary fw-semibold px-4 py-2">Tìm chuyến bay</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Phần nội dung giới thiệu và các điểm đến -->
+<div class="container my-5" style="padding-top:300px">
+    <!-- Tiêu đề chính -->
+    <h2 class="text-center mb-4">Book vé máy bay online giá rẻ</h2>
+    <p>
+        Mua <strong>vé máy bay</strong> trực tuyến đang trở thành xu hướng tiện lợi
+        trên <strong>ViVu Airline</strong>. Cho thông tin nhanh chóng xuyên lục địa quốc tế,
+        ViVu Airline cung cấp sự lựa chọn phong phú đến vô số điểm đến với sự hỗ trợ từ ba lô hay khách
+        doanh nhân. Khuyến mãi vé máy bay thường xuyên giúp bạn dễ dàng săn vé máy bay giá rẻ
+        với mức chi phí tối ưu. Đặt vé máy bay ngay hôm nay để tận hưởng chuyến hành trình chu đáo
+        và tiện lợi cùng <strong>vé máy bay</strong> của bạn.
+    </p>
+
+    <!-- Điểm đến quốc tế -->
+    <h3 class="text-center mt-5">Điểm đến quốc tế</h3>
+    <div class="row row-cols-2 row-cols-md-4 g-3 text-center mt-3">
+        <div class="col">
+            <ul class="list-unstyled">
+                <li><a href="/destination/thailand" class="text-dark text-decoration-none">Thái Lan</a></li>
+                <li><a href="/destination/malaysia" class="text-dark text-decoration-none">Malaysia</a></li>
+                <li><a href="/destination/singapore" class="text-dark text-decoration-none">Singapore</a></li>
+                <li><a href="/destination/indonesia" class="text-dark text-decoration-none">Indonesia</a></li>
+                <li><a href="@Url.Action("BlogHanQuoc", "Destination")" class="text-dark text-decoration-none">Hàn Quốc</a></li>
+                <li><a href="/destination/japan" class="text-dark text-decoration-none">Nhật Bản</a></li>
+            </ul>
+        </div>
+        <div class="col">
+            <ul class="list-unstyled">
+                <li><a href="/destination/usa" class="text-dark text-decoration-none">Mỹ</a></li>
+                <li><a href="/destination/canada" class="text-dark text-decoration-none">Canada</a></li>
+                <li><a href="/destination/france" class="text-dark text-decoration-none">Pháp</a></li>
+                <li><a href="/destination/germany" class="text-dark text-decoration-none">Đức</a></li>
+                <li><a href="/destination/italy" class="text-dark text-decoration-none">Ý</a></li>
+                <li><a href="@Url.Action("BlogAnh", "Destination")" class="text-dark text-decoration-none">Anh</a></li>
+            </ul>
+        </div>
+        <div class="col">
+            <ul class="list-unstyled">
+                <li><a href="/destination/china" class="text-dark text-decoration-none">Trung Quốc</a></li>
+                <li><a href="/destination/hongkong" class="text-dark text-decoration-none">Hong Kong</a></li>
+                <li><a href="/destination/taiwan" class="text-dark text-decoration-none">Đài Loan</a></li>
+                <li><a href="/destination/australia" class="text-dark text-decoration-none">Úc</a></li>
+                <li><a href="/destination/newzealand" class="text-dark text-decoration-none">New Zealand</a></li>
+                <li><a href="/destination/india" class="text-dark text-decoration-none">Ấn Độ</a></li>
+            </ul>
+        </div>
+        <div class="col">
+            <ul class="list-unstyled">
+                <li><a href="/destination/dubai" class="text-dark text-decoration-none">Dubai</a></li>
+                <li><a href="/destination/qatar" class="text-dark text-decoration-none">Qatar</a></li>
+                <li><a href="/destination/turkey" class="text-dark text-decoration-none">Thổ Nhĩ Kỳ</a></li>
+                <li><a href="/destination/greece" class="text-dark text-decoration-none">Hy Lạp</a></li>
+                <li><a href="/destination/egypt" class="text-dark text-decoration-none">Ai Cập</a></li>
+                <li><a href="/destination/cameroon" class="text-dark text-decoration-none">Cameroon</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Điểm đến nội địa -->
+    <h3 class="text-center mt-5">Điểm đến nội địa</h3>
+    <div class="row row-cols-2 row-cols-md-4 g-3 text-center mt-3">
+        <div class="col">
+            <ul class="list-unstyled">
+                <li><a href="/destination/hanoi" class="text-dark text-decoration-none">Hà Nội</a></li>
+                <li><a href="/destination/haiphong" class="text-dark text-decoration-none">Hải Phòng</a></li>
+                <li><a href="/destination/danang" class="text-dark text-decoration-none">Đà Nẵng</a></li>
+                <li><a href="/destination/nhatrang" class="text-dark text-decoration-none">Nha Trang</a></li>
+            </ul>
+        </div>
+        <div class="col">
+            <ul class="list-unstyled">
+                <li><a href="/destination/hcm" class="text-dark text-decoration-none">TPHCM</a></li>
+                <li><a href="/destination/dalat" class="text-dark text-decoration-none">Đà Lạt</a></li>
+                <li><a href="/destination/phuquoc" class="text-dark text-decoration-none">Phú Quốc</a></li>
+                <li><a href="/destination/condao" class="text-dark text-decoration-none">Côn Đảo</a></li>
+            </ul>
+        </div>
+        <div class="col">
+            <ul class="list-unstyled">
+                <li><a href="/destination/vinh" class="text-dark text-decoration-none">Vinh</a></li>
+                <li><a href="/destination/hue" class="text-dark text-decoration-none">Huế</a></li>
+                <li><a href="/destination/cantho" class="text-dark text-decoration-none">Cần Thơ</a></li>
+                <li><a href="/destination/quynhon" class="text-dark text-decoration-none">Quy Nhơn</a></li>
+            </ul>
+        </div>
+        <div class="col">
+            <ul class="list-unstyled">
+                <li><a href="/destination/bmthuot" class="text-dark text-decoration-none">Buôn Ma Thuột</a></li>
+                <li><a href="/destination/pleiku" class="text-dark text-decoration-none">Pleiku</a></li>
+                <li><a href="/destination/thanhoa" class="text-dark text-decoration-none">Thanh Hoá</a></li>
+                <li><a href="/destination/phuyen" class="text-dark text-decoration-none">Phú Yên</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Vé máy bay các hãng hàng không -->
+    <h3 class="text-center mt-5">Vé máy bay các hãng hàng không</h3>
+    <div class="row row-cols-2 row-cols-md-4 g-3 text-center mt-3">
+        <div class="col">
+            <ul class="list-unstyled">
+                <li>Vietjet Air</li>
+                <li>Vietnam Airlines</li>
+                <li>Jetstar</li>
+                <li>Bamboo Airways</li>
+            </ul>
+        </div>
+        <div class="col">
+            <ul class="list-unstyled">
+                <li>AirAsia</li>
+                <li>Thai Airways</li>
+                <li>Singapore Airlines</li>
+                <li>China Airlines</li>
+            </ul>
+        </div>
+        <div class="col">
+            <ul class="list-unstyled">
+                <li>Eva Air</li>
+                <li>Japan Airlines</li>
+                <li>Asiana Airlines</li>
+                <li>Turkish Airlines</li>
+            </ul>
+        </div>
+        <div class="col">
+            <ul class="list-unstyled">
+                <li>Qatar Airways</li>
+                <li>Emirates</li>
+                <li>Royal Brunei Airlines</li>
+                <li>American Airlines</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Câu hỏi thường gặp (FAQ) -->
+<div class="container my-5">
+    <h2 class="text-center mb-4">Câu hỏi thường gặp</h2>
+    <div class="accordion" id="faqAccordion">
+        <!-- FAQ 1 -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="faq1">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1" aria-expanded="false" aria-controls="collapse1">
+                    Làm thế nào để săn vé máy bay giá rẻ?
+                </button>
+            </h2>
+            <div id="collapse1" class="accordion-collapse collapse" aria-labelledby="faq1" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                    Bạn có thể săn vé giá rẻ bằng cách thường xuyên theo dõi các chương trình khuyến mãi, đặt vé trước ngày khởi hành vài tháng,
+                    và so sánh giá vé giữa các hãng hàng không.
+                </div>
+            </div>
+        </div>
+
+        <!-- FAQ 2 -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="faq2">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse2" aria-expanded="false" aria-controls="collapse2">
+                    Cần mang những loại giấy tờ gì khi đi máy bay?
+                </button>
+            </h2>
+            <div id="collapse2" class="accordion-collapse collapse" aria-labelledby="faq2" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                    Hành khách cần mang theo giấy tờ tuỳ thân hợp lệ (CMND/CCCD/hộ chiếu) còn thời hạn,
+                    vé máy bay hoặc mã đặt chỗ, và các giấy tờ liên quan nếu bay quốc tế.
+                </div>
+            </div>
+        </div>
+
+        <!-- FAQ 3 -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="faq3">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse3" aria-expanded="false" aria-controls="collapse3">
+                    Cần làm thủ tục gì trước khi lên máy bay?
+                </button>
+            </h2>
+            <div id="collapse3" class="accordion-collapse collapse" aria-labelledby="faq3" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                    Bạn cần làm thủ tục check-in (trực tuyến hoặc tại quầy), cân hành lý (nếu có),
+                    và đến cửa khởi hành (gate) trước giờ bay theo quy định của hãng.
+                </div>
+            </div>
+        </div>
+
+        <!-- FAQ 4 -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="faq4">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse4" aria-expanded="false" aria-controls="collapse4">
+                    Có thể thanh toán bằng hình thức nào khi đặt vé máy bay tại ViVu?
+                </button>
+            </h2>
+            <div id="collapse4" class="accordion-collapse collapse" aria-labelledby="faq4" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                    Bạn có thể thanh toán bằng thẻ tín dụng/ghi nợ, chuyển khoản ngân hàng, ví điện tử,
+                    hoặc thanh toán tại văn phòng đại diện (nếu có) tuỳ theo chính sách của Vivu.
+                </div>
+            </div>
+        </div>
+
+        <!-- FAQ 5 -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="faq5">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse5" aria-expanded="false" aria-controls="collapse5">
+                    Hành lý máy bay bị thừa cân phải làm gì?
+                </button>
+            </h2>
+            <div id="collapse5" class="accordion-collapse collapse" aria-labelledby="faq5" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                    Bạn có thể mua thêm hành lý ký gửi (nếu hãng cho phép) hoặc bỏ bớt đồ đạc để đảm bảo không vượt quá quy định.
+                    Lưu ý mua thêm trước giờ bay để tránh phí phạt cao.
+                </div>
+            </div>
+        </div>
+
+        <!-- FAQ 6 -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="faq6">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse6" aria-expanded="false" aria-controls="collapse6">
+                    Muốn dời ngày bay, giờ bay, hoặc hành trình bay có được không?
+                </button>
+            </h2>
+            <div id="collapse6" class="accordion-collapse collapse" aria-labelledby="faq6" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                    Tuỳ thuộc vào quy định của từng hãng hàng không. Thông thường, bạn có thể đổi vé (ngày, giờ)
+                    nhưng sẽ chịu phí thay đổi. Hãy liên hệ tổng đài hoặc đại lý để được hỗ trợ.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- Thêm jQuery và jQuery UI cho Autocomplete -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+
+    <!-- Script xử lý hiệu ứng chuyển vị trí form khi scroll -->
+    <script>
+        $(window).on('scroll', function() {
+            if ($(window).scrollTop() > 50) {
+                $('.search-form-container').addClass('scrolled');
+            } else {
+                $('.search-form-container').removeClass('scrolled');
+            }
+        });
+    </script>
+
+    <script>
+        $(function () {
+            // Hàm xử lý Autocomplete chung cho cả "Nơi Đi" và "Nơi Đến"
+            function setupAutocomplete(inputId, iataId, errorId, type) {
+                $("#" + inputId).autocomplete({
+                    source: function (request, response) {
+                        $.ajax({
+                            url: '@Url.Action("GetLocations", "Home")',
+                            data: { term: request.term, type: type },
+                            dataType: "json",
+                            success: function (data) {
+                                if (data.length === 0) {
+                                    response([{ label: "Không tìm thấy sân bay", value: "" }]);
+                                } else {
+                                    response(data);
+                                }
+                            },
+                            error: function (xhr, status, error) {
+                                console.error("Error fetching locations:", error);
+                                response([{ label: "Lỗi khi tìm kiếm sân bay", value: "" }]);
+                            }
+                        });
+                    },
+                    minLength: 0, // Cho phép hiển thị gợi ý ngay cả khi chưa nhập gì
+                    select: function (event, ui) {
+                        if (ui.item.value) {
+                            $("#" + inputId).val(ui.item.label);
+                            $("#" + iataId).val(ui.item.value);
+                            $("#" + inputId).removeClass("is-invalid");
+                        } else {
+                            $("#" + iataId).val("");
+                            $("#" + inputId).addClass("is-invalid");
+                        }
+                        return false;
+                    },
+                    focus: function (event, ui) {
+                        return false;
+                    },
+                    change: function (event, ui) {
+                        if (!ui.item) {
+                            $("#" + iataId).val("");
+                            $("#" + inputId).addClass("is-invalid");
+                        }
+                    },
+                    open: function () {
+                        $(this).autocomplete("widget").css("z-index", 1000);
+                    }
+                }).autocomplete("instance")._renderItem = function (ul, item) {
+                    return $("<li>")
+                        .append("<div>" + item.label + "</div>")
+                        .appendTo(ul);
+                };
+
+                // Hiển thị danh sách sân bay mặc định khi bấm vào ô input
+                $("#" + inputId).on("focus", function () {
+                    if (!$(this).val()) {
+                        $(this).autocomplete("search", "");
+                    }
+                });
+            }
+
+            // Thiết lập Autocomplete cho "Nơi Đi"
+            setupAutocomplete("from", "fromIata", "fromIataError", "departure");
+
+            // Thiết lập Autocomplete cho "Nơi Đến"
+            setupAutocomplete("to", "toIata", "toIataError", "destination");
+
+            // Xử lý toggle ngày về
+            const roundTripRadio = document.getElementById("roundTrip");
+            const oneWayRadio = document.getElementById("oneWay");
+            const returnDateContainer = document.getElementById("returnDateContainer");
+            const returnDateInput = document.getElementById("returnDate");
+
+            function toggleReturnDate() {
+                if (roundTripRadio.checked) {
+                    returnDateContainer.classList.remove("d-none");
+                    returnDateInput.required = true;
+                } else {
+                    returnDateContainer.classList.add("d-none");
+                    returnDateInput.required = false;
+                    returnDateInput.value = "";
+                }
+            }
+
+            roundTripRadio.addEventListener("change", toggleReturnDate);
+            oneWayRadio.addEventListener("change", toggleReturnDate);
+            toggleReturnDate();
+
+            // Xử lý số lượng hành khách
+            const adultMinus = document.getElementById("adultMinus");
+            const adultPlus = document.getElementById("adultPlus");
+            const adultCountEl = document.getElementById("adultCount");
+            const childMinus = document.getElementById("childMinus");
+            const childPlus = document.getElementById("childPlus");
+            const childCountEl = document.getElementById("childCount");
+            const passengerLabel = document.getElementById("passengerLabel");
+
+            // Hàm cập nhật nhãn hiển thị số lượng hành khách
+            function updatePassengerLabel() {
+                const adultCount = parseInt(adultCountEl.value) || 0;
+                const childCount = parseInt(childCountEl.value) || 0;
+                let label = '';
+
+                if (adultCount > 0) {
+                    label += `${adultCount} người lớn`;
+                }
+                if (childCount > 0) {
+                    if (label) label += ', ';
+                    label += `${childCount} trẻ em`;
+                }
+                if (!label) {
+                    label = '0 hành khách'; // Trường hợp không có hành khách
+                }
+
+                passengerLabel.textContent = label;
+            }
+
+            // Xử lý sự kiện bấm nút cộng/trừ cho người lớn
+            adultPlus.addEventListener('click', function () {
+                let adultCount = parseInt(adultCountEl.value) || 0;
+                adultCount++;
+                adultCountEl.value = adultCount;
+                updatePassengerLabel();
+            });
+
+            adultMinus.addEventListener('click', function () {
+                let adultCount = parseInt(adultCountEl.value) || 0;
+                if (adultCount > 1) { // Đảm bảo ít nhất 1 người lớn
+                    adultCount--;
+                    adultCountEl.value = adultCount;
+                    updatePassengerLabel();
+                }
+            });
+
+            // Xử lý sự kiện bấm nút cộng/trừ cho trẻ em
+            childPlus.addEventListener('click', function () {
+                let childCount = parseInt(childCountEl.value) || 0;
+                childCount++;
+                childCountEl.value = childCount;
+                updatePassengerLabel();
+            });
+
+            childMinus.addEventListener('click', function () {
+                let childCount = parseInt(childCountEl.value) || 0;
+                if (childCount > 0) {
+                    childCount--;
+                    childCountEl.value = childCount;
+                    updatePassengerLabel();
+                }
+            });
+
+            // Cập nhật nhãn ban đầu khi trang được tải
+            updatePassengerLabel();
+        });
+    </script>
+}

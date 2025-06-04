@@ -1,0 +1,680 @@
+﻿@model FlightBookingApp.ViewModel.BookingConfirmationViewModel
+
+@{
+    ViewData["Title"] = "Xác nhận đặt vé";
+}
+
+<style>
+    /* Giữ nguyên toàn bộ CSS từ file gốc */
+    body {
+        font-family: 'Arial', sans-serif;
+        background-color: #f4f4f9;
+        color: #333;
+    }
+
+    .container {
+        max-width: 900px;
+        margin: 40px auto;
+        padding: 20px;
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+        color: #2c3e50;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    h4, h5, h6 {
+        color: #34495e;
+        margin-top: 20px;
+        border-bottom: 2px solid #3498db;
+        padding-bottom: 5px;
+    }
+
+    p {
+        margin: 10px 0;
+        font-size: 16px;
+    }
+
+    .alert-success {
+        background-color: #d4edda;
+        color: #155724;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    ul {
+        list-style-type: none;
+        padding: 0;
+    }
+
+    li {
+        background-color: #f9f9f9;
+        padding: 10px;
+        margin: 5px 0;
+        border-radius: 5px;
+        border-left: 4px solid #3498db;
+    }
+
+    .flight-info {
+        background-color: #ecf0f1;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 15px;
+    }
+
+    .form-group {
+        margin-top: 20px;
+        text-align: center;
+    }
+
+    .btn-complete {
+        background-color: #3498db;
+        color: #fff;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+        .btn-complete:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-complete:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+    .error-message {
+        color: #e74c3c;
+        text-align: center;
+        margin-top: 20px;
+    }
+
+    .payment-methods {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+
+    .payment-option {
+        text-align: center;
+        cursor: pointer;
+        padding: 10px;
+        border: 2px solid transparent;
+        border-radius: 5px;
+        transition: border-color 0.3s;
+    }
+
+        .payment-option.selected {
+            border-color: #3498db;
+        }
+
+        .payment-option img {
+            width: 100px;
+            height: 100px;
+            object-fit: contain;
+        }
+
+        .payment-option p {
+            margin: 5px 0 0;
+            font-size: 14px;
+            color: #34495e;
+        }
+
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        justify-content: center;
+        align-items: center;
+    }
+
+    .modal-content {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        width: 400px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+        .modal-content h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        .modal-content .success-icon {
+            font-size: 50px;
+            color: #28a745;
+            margin-bottom: 20px;
+        }
+
+        .modal-content p {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .modal-content .btn-close {
+            background-color: #3498db;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+            .modal-content .btn-close:hover {
+                background-color: #2980b9;
+            }
+
+    .payment-form input, .payment-form select {
+        width: 100%;
+        max-width: 300px;
+        padding: 10px;
+        margin: 10px 0;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+
+    .payment-form button {
+        background-color: #28a745;
+        color: #fff;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+        .payment-form button:hover {
+            background-color: #218838;
+        }
+
+    .qr-code {
+        margin: 20px 0;
+    }
+
+        .qr-code img {
+            width: 200px;
+            height: 200px;
+        }
+
+    .btn-exit {
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: #e74c3c;
+        color: #fff;
+        text-decoration: none;
+        border-radius: 5px;
+        font-size: 16px;
+        font-weight: bold;
+        transition: background-color 0.3s ease;
+        margin-bottom: 20px;
+    }
+
+        .btn-exit:hover {
+            background-color: #c0392b;
+        }
+
+    .booking-qr-code {
+        text-align: center;
+        margin-top: 20px;
+    }
+
+        .booking-qr-code img {
+            width: 200px;
+            height: 200px;
+        }
+</style>
+
+<div class="container">
+    <a class="btn-exit" href="@Url.Action("Index", "Home")">Thoát</a>
+    <h2>Xác nhận đặt vé</h2>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert-success">
+            @TempData["Success"]
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="error-message">
+            @TempData["Error"]
+        </div>
+    }
+
+    @if (Model == null || Model.BookingForm == null)
+    {
+        <p class="error-message">Không tìm thấy thông tin đặt vé.</p>
+    }
+    else
+    {
+        <h5>Thông tin liên hệ</h5>
+        <p><strong>Họ tên:</strong> @Model.BookingForm.ContactName</p>
+        <p><strong>Email:</strong> @Model.BookingForm.ContactEmail</p>
+        <p><strong>Số điện thoại:</strong> @Model.BookingForm.ContactPhone</p>
+        <p><strong>Giới tính:</strong> @(Model.BookingForm.ContactGender == "Male" ? "Nam" : "Nữ")</p>
+
+        <h5>Thông tin chuyến bay</h5>
+        @if (Model.Flight != null)
+        {
+            <div class="flight-info">
+                <h6>Chuyến đi: @Model.Flight.DepartureAirport.City (@Model.Flight.DepartureAirport.IataCode) → @Model.Flight.DestinationAirport.City (@Model.Flight.DestinationAirport.IataCode)</h6>
+                <p><strong>Chuyến bay:</strong> @Model.Flight.Airline @Model.Flight.FlightNumber</p>
+                <p><strong>Khởi hành:</strong> @Model.Flight.DepartureTime.ToString("dd/MM/yyyy HH:mm")</p>
+                <p><strong>Đến nơi:</strong> @Model.Flight.ArrivalTime.ToString("dd/MM/yyyy HH:mm")</p>
+                <p><strong>Giá vé:</strong> @Model.Flight.Price.ToString("N0") VNĐ/người</p>
+            </div>
+        }
+        else
+        {
+            <p class="error-message">Không có thông tin chuyến bay đi.</p>
+        }
+
+        @if (Model.BookingForm.IsRoundTrip && Model.ReturnFlight != null)
+        {
+            <div class="flight-info">
+                <h6>Chuyến về: @Model.ReturnFlight.DepartureAirport.City (@Model.ReturnFlight.DepartureAirport.IataCode) → @Model.ReturnFlight.DestinationAirport.City (@Model.ReturnFlight.DestinationAirport.IataCode)</h6>
+                <p><strong>Chuyến bay:</strong> @Model.ReturnFlight.Airline @Model.ReturnFlight.FlightNumber</p>
+                <p><strong>Khởi hành:</strong> @Model.ReturnFlight.DepartureTime.ToString("dd/MM/yyyy HH:mm")</p>
+                <p><strong>Đến nơi:</strong> @Model.ReturnFlight.ArrivalTime.ToString("dd/MM/yyyy HH:mm")</p>
+                <p><strong>Giá vé:</strong> @Model.ReturnFlight.Price.ToString("N0") VNĐ/người</p>
+            </div>
+        }
+        else if (Model.BookingForm.IsRoundTrip)
+        {
+            <p class="error-message">Không có thông tin chuyến bay về.</p>
+        }
+
+        <h5>Danh sách hành khách</h5>
+        @if (Model.Passengers != null && Model.Passengers.Any())
+        {
+            <ul>
+                @for (int i = 0; i < Model.Passengers.Count; i++)
+                {
+                    var passenger = Model.Passengers[i];
+                    <li>
+                        <strong>Hành khách @(i + 1):</strong> @passenger.FullName <br />
+                        <strong>Giới tính:</strong> @(passenger.Gender == "M" ? "Nam" : "Nữ") <br />
+                        <strong>Ngày sinh:</strong> @(passenger.DateOfBirth.HasValue ? passenger.DateOfBirth.Value.ToString("dd/MM/yyyy") : "Không có") <br />
+                        <strong>Quốc tịch:</strong> @passenger.Nationality <br />
+                        <strong>Giấy tờ tùy thân:</strong> @(string.IsNullOrEmpty(passenger.IdType) ? "Không có" : passenger.IdType) <br />
+                        <strong>Quốc gia cấp:</strong> @passenger.IdCountry <br />
+                        <strong>Hành lý:</strong> @passenger.LuggageFee.ToString("N0") VNĐ
+                    </li>
+                }
+            </ul>
+        }
+        else
+        {
+            <p class="error-message">Không có hành khách.</p>
+        }
+
+        <h5>Thông tin hóa đơn (nếu có)</h5>
+        @if (Model.BookingForm.InvoiceRequest)
+        {
+            <p><strong>Công ty:</strong> @Model.BookingForm.CompanyName</p>
+            <p><strong>Địa chỉ:</strong> @Model.BookingForm.CompanyAddress, @Model.BookingForm.CompanyCity</p>
+            <p><strong>Mã số thuế:</strong> @Model.BookingForm.TaxCode</p>
+            <p><strong>Người nhận:</strong> @Model.BookingForm.InvoiceRecipient</p>
+            <p><strong>Số điện thoại:</strong> @Model.BookingForm.InvoicePhone</p>
+            <p><strong>Email:</strong> @Model.BookingForm.InvoiceEmail</p>
+        }
+        else
+        {
+            <p>Không yêu cầu hóa đơn.</p>
+        }
+
+        <h5>Tổng giá</h5>
+        <p style="color:red; text-align:center;"><strong>Tổng tiền:</strong> @Model.TotalPrice.ToString("N0") VNĐ</p>
+
+        @if (!Model.IsBookingSuccessful)
+        {
+            <form id="completeBookingForm" action="https://localhost:7065/Home/CompleteBooking" method="post">
+                <input type="hidden" name="FlightId" value="@Model.BookingForm.FlightId" />
+                <input type="hidden" name="ReturnFlightId" value="@Model.BookingForm.ReturnFlightId" />
+                <input type="hidden" name="IsRoundTrip" value="@Model.BookingForm.IsRoundTrip.ToString().ToLower()" />
+                <input type="hidden" name="PassengerCount" value="@Model.BookingForm.PassengerCount" />
+                <input type="hidden" name="AdultCount" value="@Model.BookingForm.AdultCount" />
+                <input type="hidden" name="ChildCount" value="@Model.BookingForm.ChildCount" />
+                <input type="hidden" name="ContactEmail" value="@Model.BookingForm.ContactEmail" />
+                <input type="hidden" name="ContactPhone" value="@Model.BookingForm.ContactPhone" />
+                <input type="hidden" name="ContactName" value="@Model.BookingForm.ContactName" />
+                <input type="hidden" name="ContactGender" value="@Model.BookingForm.ContactGender" />
+                <input type="hidden" name="InvoiceRequest" value="@Model.BookingForm.InvoiceRequest.ToString()" />
+                <input type="hidden" name="CompanyName" value="@Model.BookingForm.CompanyName" />
+                <input type="hidden" name="CompanyAddress" value="@Model.BookingForm.CompanyAddress" />
+                <input type="hidden" name="CompanyCity" value="@Model.BookingForm.CompanyCity" />
+                <input type="hidden" name="TaxCode" value="@Model.BookingForm.TaxCode" />
+                <input type="hidden" name="InvoiceRecipient" value="@Model.BookingForm.InvoiceRecipient" />
+                <input type="hidden" name="InvoicePhone" value="@Model.BookingForm.InvoicePhone" />
+                <input type="hidden" name="InvoiceEmail" value="@Model.BookingForm.InvoiceEmail" />
+
+                @for (int i = 0; i < Model.Passengers?.Count; i++)
+                {
+                    var passenger = Model.Passengers[i];
+                    <input type="hidden" name="PassengerNames[@i]" value="@passenger.FullName" />
+                    <input type="hidden" name="PassengerDob[@i]" value="@(passenger.DateOfBirth.HasValue ? passenger.DateOfBirth.Value.ToString("yyyy-MM-dd") : "")" />
+                    <input type="hidden" name="PassengerGenders[@i]" value="@(passenger.Gender == "M" ? "Male" : "Female")" />
+                    @if (i < Model.BookingForm.AdultCount)
+                    {
+                        <input type="hidden" name="IdTypeAdult[@i]" value="@passenger.IdType" />
+                        <input type="hidden" name="IdExpiryAdult[@i]" value="@(passenger.IdExpiry.HasValue ? passenger.IdExpiry.Value.ToString("yyyy-MM-dd") : "")" />
+                        <input type="hidden" name="IdCountryAdult[@i]" value="@passenger.IdCountry" />
+                        <input type="hidden" name="NationalityAdult[@i]" value="@passenger.Nationality" />
+                        <input type="hidden" name="LuggageAdult[@i]" value="@passenger.LuggageFee.ToString()" />
+                    }
+                    else
+                    {
+                        <input type="hidden" name="IdTypeChild[@(i - Model.BookingForm.AdultCount)]" value="@passenger.IdType" />
+                        <input type="hidden" name="IdCountryChild[@(i - Model.BookingForm.AdultCount)]" value="@passenger.IdCountry" />
+                        <input type="hidden" name="NationalityChild[@(i - Model.BookingForm.AdultCount)]" value="@passenger.Nationality" />
+                        <input type="hidden" name="LuggageChild[@(i - Model.BookingForm.AdultCount)]" value="@passenger.LuggageFee.ToString()" />
+                    }
+                }
+
+                <input type="hidden" name="totalPrice" value="@Model.TotalPrice" />
+                <input type="hidden" name="userId" value="@Model.UserId" />
+                <input type="hidden" id="PaymentMethod" name="paymentMethod" value="@(ViewBag.PaymentMethod ?? "")" />
+                <input type="hidden" id="PaymentStatus" name="paymentStatus" value="@(ViewBag.PaymentStatus ?? "Pending")" />
+
+                @if (ViewBag.PaymentStatus == "Completed")
+                {
+                    <div class="form-group">
+                        <p style="color: green;"><strong>Thanh toán đã hoàn tất qua @(ViewBag.PaymentMethod).</strong></p>
+                        <button type="button" class="btn-complete" id="completeBookingBtn">Hoàn tất đặt vé</button>
+                    </div>
+                }
+                else
+                {
+                    <div class="form-group">
+                        <label><strong>Chọn phương thức thanh toán:</strong></label>
+                        <div class="payment-methods">
+                            <div class="payment-option" data-method="CreditCard">
+                                <img src="https://cdn-icons-png.flaticon.com/512/2695/2695971.png" alt="Thẻ tín dụng" />
+                                <p>Thẻ tín dụng</p>
+                            </div>
+                            <div class="payment-option" data-method="VNPayQR">
+                                <img src="~/Image/vnpay.png" alt="VNPay QR" />
+                                <p>VNPay QR</p>
+                            </div>
+                            <div class="payment-option" data-method="PayOS">
+                                <img src="~/Image/QRCode.png" alt="Chuyển khoản ngân hàng" />
+                                <p>Chuyển khoản ngân hàng</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <button type="button" class="btn-complete" id="completeBookingBtn" disabled>Hoàn tất đặt vé</button>
+                    </div>
+                }
+            </form>
+        }
+    }
+</div>
+
+<!-- Modal for Credit Card Payment -->
+<div id="creditCardModal" class="modal">
+    <div class="modal-content">
+        <h3>Thanh toán bằng thẻ tín dụng</h3>
+        <div class="payment-form">
+            <input type="text" placeholder="Số thẻ" id="cardNumber" required />
+            <input type="text" placeholder="Tên trên thẻ" id="cardHolder" required />
+            <input type="text" placeholder="Ngày hết hạn (MM/YY)" id="expiryDate" required />
+            <input type="text" placeholder="Nhập mã (CVV)" id="cvv" required />
+            <p><strong>Tổng tiền:</strong> @Model.TotalPrice.ToString("N0") VNĐ</p>
+            <button type="button" onclick="processPayment('CreditCard')">Thanh toán</button>
+            <button type="button" class="btn-close" onclick="closeModal('creditCardModal')">Đóng</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for VNPay QR Payment -->
+<div id="vnpayQRModal" class="modal">
+    <div class="modal-content">
+        <h3>Thanh toán bằng VNPay QR</h3>
+        <div class="payment-form">
+            <p><strong>Tổng tiền:</strong> @Model.TotalPrice.ToString("N0") VNĐ</p>
+            <div class="qr-code">
+                <img src="@ViewBag.QRCodeUrl" alt="VNPay QR Code" id="vnpayQRCodeImage" />
+            </div>
+            <p>Quét mã QR bằng ứng dụng VNPay để thanh toán.</p>
+            <button type="button" onclick="processPayment('VNPayQR')">Xác nhận thanh toán</button>
+            <button type="button" class="btn-close" onclick="closeModal('vnpayQRModal')">Đóng</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal thông báo thành công -->
+<div id="successModal" class="modal">
+    <div class="modal-content">
+        <span class="success-icon">✔</span>
+        <h3>Thành công!</h3>
+        <p id="successMessage">Thanh toán thành công!</p>
+        <button class="btn-close" onclick="closeSuccessModal()">Đóng</button>
+    </div>
+</div>
+
+<script>
+    // Kiểm tra trạng thái khi tải trang
+    window.onload = function () {
+        var isBookingSuccessful = @Json.Serialize(Model?.IsBookingSuccessful ?? false);
+        if (isBookingSuccessful) {
+            document.getElementById('successMessage').innerText = "Đặt vé của bạn đã được hoàn tất. Bạn sẽ nhận được email xác nhận sau ít phút.";
+            document.getElementById('successModal').style.display = 'flex';
+        }
+
+        var paymentStatus = '@ViewBag.PaymentStatus';
+        if (paymentStatus === 'Completed') {
+            document.getElementById('completeBookingBtn').disabled = false;
+        }
+    };
+
+    // Hàm đóng modal thông báo thành công
+    function closeSuccessModal() {
+        document.getElementById('successModal').style.display = 'none';
+    }
+
+    // Hàm đóng modal thanh toán
+    function closeModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+    }
+
+    // Xử lý chọn phương thức thanh toán
+    document.querySelectorAll('.payment-option').forEach(option => {
+        option.addEventListener('click', function () {
+            document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('selected'));
+            this.classList.add('selected');
+            document.querySelectorAll('.modal').forEach(modal => modal.style.display = 'none');
+
+            const method = this.getAttribute('data-method');
+            document.getElementById('PaymentMethod').value = method;
+
+            if (method === 'CreditCard') {
+                document.getElementById('creditCardModal').style.display = 'flex';
+            } else if (method === 'VNPayQR') {
+                fetchVNPayQRCode();
+                document.getElementById('vnpayQRModal').style.display = 'flex';
+            } else if (method === 'PayOS') {
+                fetchPayOSPaymentLink();
+            }
+        });
+    });
+
+    // Hàm lấy mã QR VNPay
+    function fetchVNPayQRCode() {
+        const totalPrice = @Model.TotalPrice;
+        const bookingId = 0;
+        const token = "@ViewBag.JWToken";
+
+        fetch('https://localhost:7065/Home/GenerateVNPayQRCode?amount=' + totalPrice + '&bookingId=' + bookingId, {
+            headers: {
+                'Authorization': 'Bearer ' + token
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok: ' + response.statusText);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success && data.qrCodeUrl) {
+                document.getElementById('vnpayQRCodeImage').src = data.qrCodeUrl;
+            } else {
+                alert('Không thể tạo mã QR VNPay: ' + (data.message || 'Lỗi không xác định'));
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching VNPay QR code:', error);
+            alert('Có lỗi xảy ra khi tạo mã QR VNPay: ' + error.message);
+        });
+    }
+
+    // Hàm tạo link thanh toán PayOS
+    async function fetchPayOSPaymentLink() {
+        const totalPrice = @Model.TotalPrice;
+        const orderId = Math.floor(new Date().getTime() / 1000);
+        const token = "@ViewBag.JWToken";
+
+        try {
+            const response = await fetch('https://localhost:7065/Home/CreatePaymentLink', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify({
+                    amount: totalPrice,
+                    orderId: orderId.toString()
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok: ' + response.statusText);
+            }
+
+            const data = await response.json();
+            if (data.success) {
+                localStorage.setItem('currentOrderId', orderId);
+                window.location.href = data.paymentUrl; // Chuyển hướng tới PayOS
+            } else {
+                alert('Không thể tạo link thanh toán: ' + (data.message || 'Lỗi không xác định'));
+            }
+        } catch (error) {
+            console.error('Error creating payment link:', error);
+            alert('Có lỗi xảy ra khi tạo link thanh toán: ' + error.message);
+        }
+    }
+
+    // Hàm xử lý thanh toán
+    function processPayment(method) {
+        if (method === 'CreditCard') {
+            const cardNumber = document.getElementById('cardNumber').value;
+            const cardHolder = document.getElementById('cardHolder').value;
+            const expiryDate = document.getElementById('expiryDate').value;
+            const cvv = document.getElementById('cvv').value;
+
+            if (!cardNumber || !cardHolder || !expiryDate || !cvv) {
+                alert('Vui lòng điền đầy đủ thông tin thẻ tín dụng.');
+                return;
+            }
+
+            fetch('https://localhost:7065/Home/ProcessCreditCardPayment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    cardNumber: cardNumber,
+                    cardHolder: cardHolder,
+                    expiryDate: expiryDate,
+                    cvv: cvv,
+                    amount: @Model.TotalPrice
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('PaymentStatus').value = 'Completed';
+                    document.getElementById('PaymentMethod').value = 'CreditCard';
+                    document.getElementById('successMessage').innerText = 'Thanh toán thành công!';
+                    document.getElementById('creditCardModal').style.display = 'none';
+                    document.getElementById('successModal').style.display = 'flex';
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    alert('Thanh toán thất bại: ' + data.message);
+                    document.getElementById('PaymentStatus').value = 'Pending';
+                }
+            })
+            .catch(error => {
+                console.error('Error processing credit card payment:', error);
+                alert('Có lỗi xảy ra khi xử lý thanh toán.');
+                document.getElementById('PaymentStatus').value = 'Pending';
+            });
+        } else if (method === 'VNPayQR') {
+            fetch('https://localhost:7065/Home/ProcessVNPayPayment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    amount: @Model.TotalPrice
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('PaymentStatus').value = 'Completed';
+                    document.getElementById('PaymentMethod').value = 'VNPayQR';
+                    document.getElementById('successMessage').innerText = 'Thanh toán thành công!';
+                    document.getElementById('vnpayQRModal').style.display = 'none';
+                    document.getElementById('successModal').style.display = 'flex';
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    alert('Thanh toán chưa được xác nhận. Vui lòng kiểm tra lại.');
+                    document.getElementById('PaymentStatus').value = 'Pending';
+                }
+            })
+            .catch(error => {
+                console.error('Error processing VNPay payment:', error);
+                alert('Có lỗi xảy ra khi xử lý thanh toán VNPay.');
+                document.getElementById('PaymentStatus').value = 'Pending';
+            });
+        }
+    }
+
+    // Xử lý sự kiện bấm nút "Hoàn tất đặt vé"
+    document.getElementById('completeBookingBtn').addEventListener('click', function () {
+        var paymentStatus = document.getElementById('PaymentStatus').value;
+        if (paymentStatus !== 'Completed') {
+            alert('Bạn chưa thanh toán. Vui lòng hoàn tất thanh toán trước khi đặt vé.');
+            return;
+        }
+        document.getElementById('completeBookingForm').submit();
+    });
+</script>

@@ -1,0 +1,26 @@
+﻿@model IEnumerable<dynamic>
+@{
+    ViewData["Title"] = "Thống kê doanh thu";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container">
+    <h2 class="text-center">Thống kê doanh thu</h2>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Ngày</th>
+                <th>Doanh thu</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.Date.ToString("dd/MM/yyyy")</td>
+                    <td>@item.Total.ToString("N0") VNĐ</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

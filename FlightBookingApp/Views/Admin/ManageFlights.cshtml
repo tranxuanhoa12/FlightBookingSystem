@@ -1,0 +1,38 @@
+﻿@model IEnumerable<FlightBookingApp.Models.Flight>
+@{
+    ViewData["Title"] = "Quản lý chuyến bay";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container">
+    <h2 class="text-center">Quản lý chuyến bay</h2>
+    
+    <!-- Nút Đồng bộ dữ liệu -->
+    <div class="text-end mb-3">
+        <button id="syncDataButton" class="btn btn-success">Đồng bộ dữ liệu</button>
+    </div>
+
+    
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $("#syncDataButton").click(function () {
+                $.ajax({
+                    url: '@Url.Action("SyncFlights", "Admin")',
+                    type: 'POST',
+                    success: function (response) {
+                        console.log("Đồng bộ dữ liệu thành công:", response);
+                        alert("Đồng bộ dữ liệu thành công!");
+                        location.reload(); // Tải lại trang để hiển thị dữ liệu mới
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("Lỗi khi đồng bộ dữ liệu:", error);
+                        alert("Đã xảy ra lỗi khi đồng bộ dữ liệu: " + error);
+                    }
+                });
+            });
+        });
+    </script>
+}

@@ -1,0 +1,440 @@
+﻿@model FlightBookingApp.Models.AdminIndexViewModel
+
+
+@{
+    ViewData["Title"] = "Thống Kê Quản Trị";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <!-- AOS CSS -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet" />
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <!-- Leaflet CSS for map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+    <style>
+        body {
+            background-color: #f4f7fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .dashboard-header {
+            background: linear-gradient(90deg, #007bff, #00c4ff);
+            color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: transform 0.3s ease;
+        }
+
+            .stat-card:hover {
+                transform: translateY(-5px);
+            }
+
+        .stat-icon {
+            font-size: 2.5rem;
+            color: #007bff;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            color: #666;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+            .section-title::after {
+                content: '';
+                width: 50px;
+                height: 3px;
+                background: #007bff;
+                position: absolute;
+                bottom: -5px;
+                left: 0;
+            }
+
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        #worldMap {
+            height: 300px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <!-- Header -->
+        <div class="dashboard-header" data-aos="fade-down">
+            <h1>Thống Kê Quản Trị</h1>
+            <p>Cập nhật dữ liệu theo thời gian thực</p>
+        </div>
+
+        <!-- Hiển thị thông báo nếu có -->
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger" role="alert">
+                @TempData["ErrorMessage"]
+            </div>
+        }
+        @if (TempData["SyncMessage"] != null)
+        {
+            <div class="alert alert-info" role="alert">
+                @TempData["SyncMessage"]
+            </div>
+        }
+
+        <!-- Thống kê tổng quan (Hàng 1: Chuyến bay) -->
+        <div class="row">
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
+                <div class="stat-card">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-plane stat-icon me-3"></i>
+                        <div>
+                            <div class="stat-value">@Model.CompletedFlights</div>
+                            <div class="stat-label">Chuyến Bay Hoàn Thành</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
+                <div class="stat-card">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-plane-departure stat-icon me-3"></i>
+                        <div>
+                            <div class="stat-value">@Model.ActiveFlights</div>
+                            <div class="stat-label">Chuyến Bay Đang Hoạt Động</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
+                <div class="stat-card">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-plane-slash stat-icon me-3"></i>
+                        <div>
+                            <div class="stat-value">@Model.CanceledFlights</div>
+                            <div class="stat-label">Chuyến Bay Bị Hủy</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Thống kê tổng quan (Hàng 2: Lượt truy cập, vé, doanh thu) -->
+        <div class="row">
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
+                <div class="stat-card">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-users stat-icon me-3"></i>
+                        <div>
+                            <div class="stat-value">@Model.TotalVisits</div>
+                            <div class="stat-label">Tổng Lượt Truy Cập</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
+                <div class="stat-card">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-ticket-alt stat-icon me-3"></i>
+                        <div>
+                            <div class="stat-value">@Model.TotalTicketsThisMonth</div>
+                            <div class="stat-label">Tổng Số Vé Đã Đặt</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
+                <div class="stat-card">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-money-bill-wave stat-icon me-3"></i>
+                        <div>
+                            <div class="stat-value">@Model.TotalRevenue.ToString("N0") VNĐ</div>
+                            <div class="stat-label">Tổng Doanh Thu</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Biểu đồ số vé bán ra -->
+        <div class="row">
+            <div class="col-md-6" data-aos="fade-up" data-aos-delay="100">
+                <div class="chart-container">
+                    <h5>Số Vé Bán Ra (Tuần Này)</h5>
+                    <canvas id="ticketSalesChart"></canvas>
+                </div>
+            </div>
+            <div class="col-md-6" data-aos="fade-up" data-aos-delay="200">
+                <div class="chart-container">
+                    <h5>Lịch Trình Chuyến Bay (8 Tháng Gần Nhất)</h5>
+                    <canvas id="flightScheduleChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Biểu đồ tỷ lệ hãng hàng không và điểm đến phổ biến -->
+        <div class="row">
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
+                <div class="chart-container">
+                    <h5>Hãng Hàng Không Phổ Biến</h5>
+                    <canvas id="popularAirlinesChart"></canvas>
+                </div>
+            </div>
+            <div class="col-md-8" data-aos="fade-up" data-aos-delay="200">
+                <div class="chart-container">
+                    <h5>Điểm Đến Phổ Biến (Tuần Này)</h5>
+                    <div id="worldMap"></div>
+                    <div class="mt-3" id="popularDestinationsList">
+                        <p>Đang tải dữ liệu...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Danh sách hãng hàng không và tuyến bay hàng đầu -->
+        <div class="row">
+            <div class="col-md-6" data-aos="fade-up" data-aos-delay="100">
+                <div class="chart-container">
+                    <h5>Danh Sách Hãng Hàng Không</h5>
+                    <div id="airlinesList">
+                        <p>Đang tải dữ liệu...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6" data-aos="fade-up" data-aos-delay="200">
+                <div class="chart-container">
+                    <h5>Tuyến Bay Hàng Đầu</h5>
+                    <div id="topFlightRoutesList">
+                        <p>Đang tải dữ liệu...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and Popper.js -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- AOS JS -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script>
+        AOS.init({
+            duration: 1000,
+            once: true
+        });
+
+        // Tải dữ liệu số vé bán ra theo ngày trong tuần
+        fetch('/Admin/GetTicketSalesThisWeek')
+            .then(response => response.json())
+            .then(data => {
+                const ctx = document.getElementById('ticketSalesChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(data),
+                        datasets: [{
+                            label: 'Số Vé',
+                            data: Object.values(data),
+                            backgroundColor: '#007bff',
+                            borderColor: '#007bff',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error loading ticket sales data:', error);
+                document.getElementById('ticketSalesChart').parentElement.innerHTML += '<p>Không thể tải dữ liệu số vé bán ra.</p>';
+            });
+
+        // Tải dữ liệu lịch trình chuyến bay
+        fetch('/Admin/GetFlightScheduleLast8Months')
+            .then(response => response.json())
+            .then(data => {
+                const ctx = document.getElementById('flightScheduleChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: Object.keys(data),
+                        datasets: [{
+                            label: 'Số Chuyến Bay',
+                            data: Object.values(data),
+                            borderColor: '#007bff',
+                            fill: true,
+                            backgroundColor: 'rgba(0, 123, 255, 0.1)'
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error loading flight schedule data:', error);
+                document.getElementById('flightScheduleChart').parentElement.innerHTML += '<p>Không thể tải dữ liệu lịch trình chuyến bay.</p>';
+            });
+
+        // Tải dữ liệu tỷ lệ hãng hàng không
+        fetch('/Admin/GetPopularAirlines')
+            .then(response => response.json())
+            .then(data => {
+                const ctx = document.getElementById('popularAirlinesChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(data),
+                        datasets: [{
+                            data: Object.values(data),
+                            backgroundColor: ['#007bff', '#28a745', '#dc3545', '#ffc107', '#17a2b8']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'right'
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error loading popular airlines data:', error);
+                document.getElementById('popularAirlinesChart').parentElement.innerHTML += '<p>Không thể tải dữ liệu hãng hàng không phổ biến.</p>';
+            });
+
+        // Tải dữ liệu điểm đến phổ biến và hiển thị trên bản đồ
+        const map = L.map('worldMap').setView([20, 0], 2);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        const destinations = {
+            'Mexico': [23.6345, -102.5528],
+            'Canada': [56.1304, -106.3468],
+            'India': [20.5937, 78.9629], // Sửa tọa độ cho India
+            'France': [46.2276, 2.2137],
+            'Australia': [-25.2744, 133.7751]
+        };
+
+        fetch('/Admin/GetPopularDestinations')
+            .then(response => response.json())
+            .then(data => {
+                const popularDestinationsList = document.getElementById('popularDestinationsList');
+                if (Object.keys(data).length > 0) {
+                    let html = '';
+                    for (const [city, percentage] of Object.entries(data)) {
+                        html += `<div class="d-flex justify-content-between"><span>${city}</span><span>${percentage.toFixed(1)}%</span></div>`;
+                        if (destinations[city]) {
+                            L.marker(destinations[city])
+                                .addTo(map)
+                                .bindPopup(`${city}: ${percentage.toFixed(1)}%`);
+                        }
+                    }
+                    popularDestinationsList.innerHTML = html;
+                } else {
+                    popularDestinationsList.innerHTML = '<p>Không có dữ liệu điểm đến phổ biến.</p>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading popular destinations data:', error);
+                document.getElementById('popularDestinationsList').innerHTML = '<p>Không thể tải dữ liệu điểm đến phổ biến.</p>';
+            });
+
+        // Tải danh sách hãng hàng không
+        fetch('/Admin/GetAirlines')
+            .then(response => response.json())
+            .then(data => {
+                const airlinesList = document.getElementById('airlinesList');
+                if (data && data.length > 0) {
+                    let html = '<table class="table"><thead><tr><th>Hãng</th><th>Tổng Chuyến Bay</th><th>Chuyến Bay Tiếp Theo</th></tr></thead><tbody>';
+                    data.forEach(airline => {
+                        const nextFlightTime = airline.nextFlightTime ? new Date(airline.nextFlightTime).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Không có';
+                        html += `<tr><td>${airline.name}</td><td>${airline.totalFlights}</td><td>${nextFlightTime}</td></tr>`;
+                    });
+                    html += '</tbody></table>';
+                    airlinesList.innerHTML = html;
+                } else {
+                    airlinesList.innerHTML = '<p>Không có dữ liệu hãng hàng không.</p>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading airlines data:', error);
+                document.getElementById('airlinesList').innerHTML = '<p>Không thể tải dữ liệu hãng hàng không.</p>';
+            });
+
+        // Tải danh sách tuyến bay hàng đầu
+        fetch('/Admin/GetTopFlightRoutes')
+            .then(response => response.json())
+            .then(data => {
+                const topFlightRoutesList = document.getElementById('topFlightRoutesList');
+                if (data && data.length > 0) {
+                    let html = '<table class="table"><thead><tr><th>Tuyến Bay</th><th>Thời Gian Bay</th><th>Số Hành Khách</th></tr></thead><tbody>';
+                    data.forEach(route => {
+                        const duration = route.duration ? `${Math.floor(route.duration / 3600000)}h ${Math.floor((route.duration % 3600000) / 60000)}m` : 'N/A';
+                        html += `<tr><td>${route.route}</td><td>${duration}</td><td>${route.totalPassengers.toLocaleString()}</td></tr>`;
+                    });
+                    html += '</tbody></table>';
+                    topFlightRoutesList.innerHTML = html;
+                } else {
+                    topFlightRoutesList.innerHTML = '<p>Không có dữ liệu tuyến bay.</p>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading top flight routes data:', error);
+                document.getElementById('topFlightRoutesList').innerHTML = '<p>Không thể tải dữ liệu tuyến bay.</p>';
+            });
+    </script>
+</body>
+</html>

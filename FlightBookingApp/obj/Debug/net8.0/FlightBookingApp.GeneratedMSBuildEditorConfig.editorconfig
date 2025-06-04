@@ -1,0 +1,117 @@
+is_global = true
+build_property.TargetFramework = net8.0
+build_property.TargetPlatformMinVersion = 
+build_property.UsingMicrosoftNETSdkWeb = true
+build_property.ProjectTypeGuids = 
+build_property.InvariantGlobalization = 
+build_property.PlatformNeutralAssembly = 
+build_property.EnforceExtendedAnalyzerRules = 
+build_property._SupportedPlatformList = Linux,macOS,Windows
+build_property.RootNamespace = FlightBookingApp
+build_property.RootNamespace = FlightBookingApp
+build_property.ProjectDir = D:\Code\Flight_Booking\FlightBookingApp\
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 
+build_property.RazorLangVersion = 8.0
+build_property.SupportLocalizedComponentNames = 
+build_property.GenerateRazorMetadataSourceChecksumAttributes = 
+build_property.MSBuildProjectDirectory = D:\Code\Flight_Booking\FlightBookingApp
+build_property._RazorSourceGeneratorDebug = 
+build_property.EffectiveAnalysisLevelStyle = 8.0
+build_property.EnableCodeStyleSeverity = 
+
+[D:/Code/Flight_Booking/FlightBookingApp/Views/Account/EditProfile.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudFxFZGl0UHJvZmlsZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Code/Flight_Booking/FlightBookingApp/Views/Account/Login.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudFxMb2dpbi5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Code/Flight_Booking/FlightBookingApp/Views/Account/Profile.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudFxQcm9maWxlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Code/Flight_Booking/FlightBookingApp/Views/Account/Register.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudFxSZWdpc3Rlci5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Code/Flight_Booking/FlightBookingApp/Views/Admin/Data.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cRGF0YS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Code/Flight_Booking/FlightBookingApp/Views/Admin/Flights_Book.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cRmxpZ2h0c19Cb29rLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Code/Flight_Booking/FlightBookingApp/Views/Admin/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Code/Flight_Booking/FlightBookingApp/Views/Admin/Login.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cTG9naW4uY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Code/Flight_Booking/FlightBookingApp/Views/Admin/ManageBookings.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cTWFuYWdlQm9va2luZ3MuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Code/Flight_Booking/FlightBookingApp/Views/Admin/ManageFlights.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cTWFuYWdlRmxpZ2h0cy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Code/Flight_Booking/FlightBookingApp/Views/Admin/ReportManager.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cUmVwb3J0TWFuYWdlci5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Code/Flight_Booking/FlightBookingApp/Views/Admin/RevenueStatistics.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cUmV2ZW51ZVN0YXRpc3RpY3MuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Code/Flight_Booking/FlightBookingApp/Views/Admin/UsersManager.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cVXNlcnNNYW5hZ2VyLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Code/Flight_Booking/FlightBookingApp/Views/Destination/BlogAnh.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRGVzdGluYXRpb25cQmxvZ0FuaC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Code/Flight_Booking/FlightBookingApp/Views/Destination/BlogHanQuoc.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRGVzdGluYXRpb25cQmxvZ0hhblF1b2MuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Code/Flight_Booking/FlightBookingApp/Views/Home/Book.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxCb29rLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Code/Flight_Booking/FlightBookingApp/Views/Home/ConfirmBooking.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxDb25maXJtQm9va2luZy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Code/Flight_Booking/FlightBookingApp/Views/Home/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Code/Flight_Booking/FlightBookingApp/Views/Home/PaymentSuccess.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxQYXltZW50U3VjY2Vzcy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Code/Flight_Booking/FlightBookingApp/Views/Home/SearchResults.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxTZWFyY2hSZXN1bHRzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Code/Flight_Booking/FlightBookingApp/Views/Home/VNPayPayment.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxWTlBheVBheW1lbnQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Code/Flight_Booking/FlightBookingApp/Views/Shared/_Layout.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9MYXlvdXQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Code/Flight_Booking/FlightBookingApp/Views/Shared/_LayoutAdmin.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9MYXlvdXRBZG1pbi5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Code/Flight_Booking/FlightBookingApp/Views/User/ManageBookings.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVXNlclxNYW5hZ2VCb29raW5ncy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 

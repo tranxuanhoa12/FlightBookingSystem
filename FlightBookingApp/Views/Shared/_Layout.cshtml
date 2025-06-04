@@ -1,0 +1,583 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewBag.Title - Hãng hàng không ViVu</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        /* Header */
+        .header {
+            background-color: white;
+            padding: 0 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Logo */
+        .navbar-brand img {
+            width: 150px;
+        }
+
+        /* Mega menu tuỳ biến */
+        .mega-dropdown {
+            position: static;
+        }
+
+        .mega-dropdown-menu {
+            width: 100%;
+            left: 0;
+            right: 0;
+            top: auto;
+            padding: 20px;
+            border-top: 2px solid #ccc;
+        }
+
+            .mega-dropdown-menu .col-sm-2 h6 {
+                font-weight: bold;
+                margin-bottom: 10px;
+            }
+
+            .mega-dropdown-menu .list-unstyled {
+                margin: 0;
+                padding: 0;
+            }
+
+                .mega-dropdown-menu .list-unstyled li a {
+                    text-decoration: none;
+                    display: block;
+                    padding: 2px 0;
+                }
+
+                    .mega-dropdown-menu .list-unstyled li a:hover {
+                        text-decoration: underline;
+                    }
+
+        /* Main content */
+        .main-content {
+            margin: 20px 0;
+            text-align: center;
+            padding: 50px;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            margin-top: 80px;
+        }
+
+        /* Footer */
+        .footer {
+            background-color: white;
+            padding: 10px 20px;
+            text-align: center;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+
+        /* Chatbox styles */
+        .chatbox-icon {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background-color: #007bff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+        }
+
+            .chatbox-icon img {
+                width: 30px;
+                height: 30px;
+            }
+
+        .chatbox-container {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 350px;
+            height: 450px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.2);
+            display: none;
+            flex-direction: column;
+            z-index: 1000;
+        }
+
+        .chatbox-header {
+            background-color: #007bff;
+            color: white;
+            padding: 10px;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+            .chatbox-header h5 {
+                margin: 0;
+                font-size: 16px;
+            }
+
+            .chatbox-header .close-btn {
+                background: none;
+                border: none;
+                color: white;
+                font-size: 20px;
+                cursor: pointer;
+            }
+
+        .chatbox-body {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+            background-color: #f8f9fa;
+        }
+
+        .chatbox-message {
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            border-radius: 10px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+
+            .chatbox-message.user {
+                background-color: #007bff;
+                color: white;
+                margin-left: auto;
+                text-align: right;
+            }
+
+            .chatbox-message.bot {
+                background-color: #e9ecef;
+                color: black;
+                margin-right: auto;
+            }
+
+        .chatbox-footer {
+            padding: 10px;
+            border-top: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+        }
+
+            .chatbox-footer input {
+                flex: 1;
+                padding: 8px;
+                border: 1px solid #ddd;
+                border-radius: 20px;
+                margin-right: 10px;
+                outline: none;
+            }
+
+            .chatbox-footer button {
+                padding: 8px 15px;
+                background-color: #007bff;
+                color: white;
+                border: none;
+                border-radius: 20px;
+                cursor: pointer;
+            }
+
+                .chatbox-footer button:hover {
+                    background-color: #0056b3;
+                }
+    </style>
+</head>
+<body>
+    @using System.Security.Claims
+
+    <!-- HEADER / NAVBAR -->
+    <div class="header">
+        <nav class="navbar navbar-expand-lg navbar-light">
+            <div class="container-fluid">
+                <!-- Logo -->
+                <a class="navbar-brand" href="@Url.Action("Index","Home")" style="padding-left:200px;">
+                    <img src="@Url.Content("~/image/nen_home.png")" alt="Logo" />
+                </a>
+
+                <!-- Nút thu gọn trên màn hình nhỏ -->
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+                        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Danh mục menu chính -->
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav mb-2 mb-lg-0">
+                        <!-- Vé quốc tế: Mega menu -->
+                        <li class="nav-item dropdown mega-dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="veQuocTeDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Vé quốc tế
+                            </a>
+                            <!-- Bên trong mega menu -->
+                            <div class="dropdown-menu mega-dropdown-menu" aria-labelledby="veQuocTeDropdown">
+                                <div class="row">
+                                    <!-- Cột 1: Châu Á -->
+                                    <div class="col-sm-2">
+                                        <h6>Vé đi Châu Á</h6>
+                                        <ul class="list-unstyled">
+                                            <li><a href="@Url.Action("BlogHanQuoc", "Destination")">Hàn Quốc</a></li>
+                                            <li><a href="#">Vé đi Nhật Bản</a></li>
+                                            <li><a href="#">Vé đi Singapore</a></li>
+                                            <li><a href="#">Vé đi Thái Lan</a></li>
+                                            <li><a href="#">Vé đi Malaysia</a></li>
+                                            <li><a href="#">Vé đi Đài Loan</a></li>
+                                            <li><a href="#">Vé đi Trung Quốc</a></li>
+                                        </ul>
+                                    </div>
+                                    <!-- Cột 2: Châu Âu -->
+                                    <div class="col-sm-2">
+                                        <h6>Vé đi Châu Âu</h6>
+                                        <ul class="list-unstyled">
+                                            <li><a href="@Url.Action("BlogAnh", "Destination")">Anh</a></li>
+                                            <li><a href="#">Vé đi Pháp</a></li>
+                                            <li><a href="#">Vé đi Đức</a></li>
+                                            <li><a href="#">Vé đi Thuỵ Sĩ</a></li>
+                                            <li><a href="#">Vé đi Ý</a></li>
+                                            <li><a href="#">Vé đi Tây Ban Nha</a></li>
+                                        </ul>
+                                    </div>
+                                    <!-- Cột 3: Châu Mỹ -->
+                                    <div class="col-sm-2">
+                                        <h6>Vé đi Châu Mỹ</h6>
+                                        <ul class="list-unstyled">
+                                            <li><a href="#">Vé đi Mỹ</a></li>
+                                            <li><a href="#">Vé đi Canada</a></li>
+                                            <li><a href="#">Vé đi Brazil</a></li>
+                                            <li><a href="#">Vé đi Bahamas</a></li>
+                                        </ul>
+                                    </div>
+                                    <!-- Cột 4: Châu Úc -->
+                                    <div class="col-sm-2">
+                                        <h6>Vé đi Châu Úc</h6>
+                                        <ul class="list-unstyled">
+                                            <li><a href="#">Vé đi Úc</a></li>
+                                            <li><a href="#">Vé đi New Zealand</a></li>
+                                            <li><a href="#">Vé đi Papua New Guinea</a></li>
+                                        </ul>
+                                    </div>
+                                    <!-- Cột 5: Châu Phi -->
+                                    <div class="col-sm-2">
+                                        <h6>Vé đi Châu Phi</h6>
+                                        <ul class="list-unstyled">
+                                            <li><a href="#">Vé đi Cameroon</a></li>
+                                            <li><a href="#">Vé đi Ai Cập</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+
+                        <!-- Các menu khác -->
+                        <!-- Vé về Việt Nam: Mega menu -->
+                        <li class="nav-item dropdown mega-dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="veVeVietNamDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Vé về Việt Nam
+                            </a>
+                            <!-- Bên trong mega menu -->
+                            <div class="dropdown-menu mega-dropdown-menu" aria-labelledby="veVeVietNamDropdown">
+                                <div class="row">
+                                    <!-- Cột 1: Châu Á -->
+                                    <div class="col-sm-2">
+                                        <h6>Vé từ Châu Á</h6>
+                                        <ul class="list-unstyled">
+                                            <li><a href="#">Hàn Quốc về Việt Nam</a></li>
+                                            <li><a href="#">Nhật Bản về Việt Nam</a></li>
+                                            <li><a href="#">Thái Lan về Việt Nam</a></li>
+                                            <li><a href="#">Singapore về Việt Nam</a></li>
+                                        </ul>
+                                    </div>
+                                    <!-- Cột 2: Châu Âu -->
+                                    <div class="col-sm-2">
+                                        <h6>Vé từ Châu Âu</h6>
+                                        <ul class="list-unstyled">
+                                            <li><a href="#">Pháp về Việt Nam</a></li>
+                                            <li><a href="#">Đức về Việt Nam</a></li>
+                                            <li><a href="#">Anh về Việt Nam</a></li>
+                                            <li><a href="#">Hà Lan về Việt Nam</a></li>
+                                            <li><a href="#">Ba Lan về Việt Nam</a></li>
+                                            <li><a href="#">CH Séc về Việt Nam</a></li>
+                                            <li><a href="#">Nga về Việt Nam</a></li>
+                                        </ul>
+                                    </div>
+                                    <!-- Cột 3: Châu Mỹ -->
+                                    <div class="col-sm-2">
+                                        <h6>Vé từ Châu Mỹ</h6>
+                                        <ul class="list-unstyled">
+                                            <li><a href="#">Mỹ về Việt Nam</a></li>
+                                            <li><a href="#">Canada về Việt Nam</a></li>
+                                        </ul>
+                                    </div>
+                                    <!-- Cột 4: Châu Úc -->
+                                    <div class="col-sm-2">
+                                        <h6>Vé từ Châu Úc</h6>
+                                        <ul class="list-unstyled">
+                                            <li><a href="#">Úc về Việt Nam</a></li>
+                                            <li><a href="#">New Zealand về Việt Nam</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="veNoiDiaDropdown" role="button"
+                               data-bs-toggle="dropdown" aria-expanded="false">
+                                Vé nội địa
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="veNoiDiaDropdown">
+                                <li><a class="dropdown-item" href="#">Vé đi Hà Nội</a></li>
+                                <li><a class="dropdown-item" href="#">Vé đi TPHCM</a></li>
+                                <li><a class="dropdown-item" href="#">Vé đi Đà Nẵng</a></li>
+                                <li><a class="dropdown-item" href="#">Vé đi Hải Phòng</a></li>
+                                <li><a class="dropdown-item" href="#">Vé đi Vân Đồn</a></li>
+                                <li><a class="dropdown-item" href="#">Vé đi Nha Trang</a></li>
+                                <li><a class="dropdown-item" href="#">Vé đi Huế</a></li>
+                                <li><a class="dropdown-item" href="#">Vé đi Phú Quốc</a></li>
+                                <li><a class="dropdown-item" href="#">Vé đi Đà Lạt</a></li>
+                                <li><a class="dropdown-item" href="#">Vé đi Côn Đảo</a></li>
+                                <li><a class="dropdown-item" href="#">Vé đi Vinh</a></li>
+                            </ul>
+                        </li>
+
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="dichVuDropdown" role="button"
+                               data-bs-toggle="dropdown" aria-expanded="false">
+                                Dịch vụ
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="dichVuDropdown">
+                                <li><a class="dropdown-item" href="#">Hỗ trợ sân bay</a></li>
+                                <li><a class="dropdown-item" href="#">Sim du lịch</a></li>
+                                <li><a class="dropdown-item" href="#">Bảo hiểm du lịch</a></li>
+                            </ul>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Tin Tức</a>
+                        </li>
+                    </ul>
+
+                    <!-- Thêm phần đăng nhập/đăng ký -->
+                    <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                        @if (!User.Identity.IsAuthenticated)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" href="@Url.Action("Login", "Account")">Đăng nhập</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="@Url.Action("Register", "Account")">Đăng ký</a>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Xin chào, @User.FindFirst(ClaimTypes.Name)?.Value
+                                </a>
+                                <ul class="dropdown-menu" aria-labelledby="userDropdown">
+                                    <li><a class="dropdown-item" href="@Url.Action("Profile", "Account")">Hồ sơ</a></li>
+                                    <li><a class="dropdown-item" href="@Url.Action("ManageBookings", "User")">Quản lý vé</a></li>
+                                    <li><a class="dropdown-item" href="@Url.Action("Logout", "Account")">Đăng xuất</a></li>
+                                </ul>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </div>
+
+    <!-- NỘI DUNG CHÍNH -->
+    <div class="container">
+        <div class="main-content">
+            @RenderBody()
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="bg-primary text-white mt-5">
+        <div class="container py-4">
+            <div class="row">
+                <!-- Cột 1: Quốc tế -->
+                <div class="col-md-2 mb-3">
+                    <h5 class="fw-bold">Quốc tế</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-white text-decoration-none">Vé đi Nhật Bản</a></li>
+                        <li><a href="@Url.Action("BlogHanQuoc", "Destination")" class="text-white text-decoration-none">Hàn Quốc</a></li>
+                        <li><a href="#" class="text-white text-decoration-none">Vé đi Mỹ</a></li>
+                        <li><a href="#" class="text-white text-decoration-none">Vé đi Úc</a></li>
+                    </ul>
+                </div>
+
+                <!-- Cột 2: Nội địa -->
+                <div class="col-md-2 mb-3">
+                    <h5 class="fw-bold">Nội địa</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-white text-decoration-none">Vé đi Hà Nội</a></li>
+                        <li><a href="#" class="text-white text-decoration-none">Vé đi Đà Nẵng</a></li>
+                        <li><a href="#" class="text-white text-decoration-none">Vé đi TPHCM</a></li>
+                        <li><a href="#" class="text-white text-decoration-none">Vé đi Nha Trang</a></li>
+                    </ul>
+                </div>
+
+                <!-- Cột 3: Theo hãng -->
+                <div class="col-md-2 mb-3">
+                    <h5 class="fw-bold">Theo hãng</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-white text-decoration-none">Vietnam Airlines</a></li>
+                        <li><a href="#" class="text-white text-decoration-none">Vietjet Air</a></li>
+                        <li><a href="#" class="text-white text-decoration-none">Bamboo Airways</a></li>
+                        <li><a href="#" class="text-white text-decoration-none">Pacific Airlines</a></li>
+                    </ul>
+                </div>
+
+                <!-- Cột 4: Dịch vụ -->
+                <div class="col-md-2 mb-3">
+                    <h5 class="fw-bold">Dịch vụ</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-white text-decoration-none">Hỗ trợ sân bay</a></li>
+                        <li><a href="#" class="text-white text-decoration-none">Sim du lịch</a></li>
+                        <li><a href="#" class="text-white text-decoration-none">Bảo hiểm du lịch</a></li>
+                        <li><a href="#" class="text-white text-decoration-none">Làm visa</a></li>
+                    </ul>
+                </div>
+
+                <!-- Cột 5: Thông tin liên hệ / Logo -->
+                <div class="col-md-4 mb-3">
+                    <!-- Logo -->
+                    <h3>ViVu Airline</h3>
+                    <!-- Thông tin liên hệ -->
+                    <p class="mb-1"><i class="bi bi-telephone-fill"></i> Hotline: 0909.999.999</p>
+                    <p class="mb-1"><i class="bi bi-envelope-fill"></i> Email: support@domain.com</p>
+                    <p class="mb-1"><i class="bi bi-geo-alt-fill"></i> Địa chỉ: 123 Quang Trung, TP.Đà Nẵng</p>
+                </div>
+            </div>
+            <!-- Dòng kẻ ngang -->
+            <hr class="border-light" />
+            <!-- Bản quyền -->
+            <div class="row">
+                <div class="col text-center">
+                    <p class="mb-0">
+                        Copyright © 2025
+                        <span class="fw-bold">ViVu Airline</span>. All rights reserved.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Chatbox HTML -->
+    <div class="chatbox-icon" id="chatboxIcon">
+        <img src="https://cdn-icons-png.flaticon.com/512/8943/8943377.png" alt="Chat Icon" />
+    </div>
+
+    <div class="chatbox-container" id="chatboxContainer">
+        <div class="chatbox-header">
+            <h5>Chat với ViVu Bot</h5>
+            <button class="close-btn" id="closeChatbox">×</button>
+        </div>
+        <div class="chatbox-body" id="chatboxBody">
+            <div class="chatbox-message bot">Xin chào! Tôi là ViVu Bot. Bạn cần giúp gì hôm nay?</div>
+        </div>
+        <div class="chatbox-footer">
+            <input type="text" id="chatboxInput" placeholder="Nhập câu hỏi của bạn..." />
+            <button id="chatboxSend">Gửi</button>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Chatbox JavaScript -->
+    <script>
+        const chatboxIcon = document.getElementById('chatboxIcon');
+        const chatboxContainer = document.getElementById('chatboxContainer');
+        const closeChatbox = document.getElementById('closeChatbox');
+        const chatboxBody = document.getElementById('chatboxBody');
+        const chatboxInput = document.getElementById('chatboxInput');
+        const chatboxSend = document.getElementById('chatboxSend');
+
+        // Hiển thị/ẩn chatbox khi bấm vào icon
+        chatboxIcon.addEventListener('click', () => {
+            chatboxContainer.style.display = chatboxContainer.style.display === 'none' ? 'flex' : 'none';
+        });
+
+        // Ẩn chatbox khi bấm nút đóng
+        closeChatbox.addEventListener('click', () => {
+            chatboxContainer.style.display = 'none';
+        });
+
+        // Gửi câu hỏi và nhận phản hồi
+        chatboxSend.addEventListener('click', sendMessage);
+        chatboxInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        async function sendMessage() {
+            const userMessage = chatboxInput.value.trim();
+            if (!userMessage) return;
+
+            // Thêm tin nhắn của người dùng vào chatbox
+            const userMsgDiv = document.createElement('div');
+            userMsgDiv.className = 'chatbox-message user';
+            userMsgDiv.textContent = userMessage;
+            chatboxBody.appendChild(userMsgDiv);
+
+            // Xóa input
+            chatboxInput.value = '';
+
+            // Cuộn xuống cuối chatbox
+            chatboxBody.scrollTop = chatboxBody.scrollHeight;
+
+            // Gửi yêu cầu đến API
+            try {
+                const response = await fetch('/Home/Chatbot', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message: userMessage }),
+                });
+
+                const data = await response.json();
+
+                // Thêm phản hồi của bot vào chatbox
+                const botMsgDiv = document.createElement('div');
+                botMsgDiv.className = 'chatbox-message bot';
+                botMsgDiv.textContent = data.response;
+                chatboxBody.appendChild(botMsgDiv);
+
+                // Cuộn xuống cuối chatbox
+                chatboxBody.scrollTop = chatboxBody.scrollHeight;
+            } catch (error) {
+                console.error('Error:', error);
+                const botMsgDiv = document.createElement('div');
+                botMsgDiv.className = 'chatbox-message bot';
+                botMsgDiv.textContent = 'Đã có lỗi xảy ra. Vui lòng thử lại sau.';
+                chatboxBody.appendChild(botMsgDiv);
+
+                // Cuộn xuống cuối chatbox
+                chatboxBody.scrollTop = chatboxBody.scrollHeight;
+            }
+        }
+    </script>
+
+    <!-- Render Scripts section -->
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

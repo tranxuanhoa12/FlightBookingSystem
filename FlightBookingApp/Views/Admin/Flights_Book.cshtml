@@ -1,0 +1,364 @@
+﻿@model FlightBookingApp.ViewModel.ManageBookingsViewModel
+
+@{
+    ViewData["Title"] = "Quản Lý Tất Cả Vé";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        body {
+            background-color: #f4f7fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .page-header {
+            background: linear-gradient(90deg, #007bff, #00c4ff);
+            color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .booking-table {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+            .booking-table th {
+                background-color: #007bff;
+                color: white;
+            }
+
+            .booking-table td {
+                vertical-align: middle;
+            }
+
+        .btn-details {
+            background-color: #28a745;
+            color: white;
+            border: none;
+        }
+
+            .btn-details:hover {
+                background-color: #218838;
+            }
+
+        .modal-header {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .pagination {
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+            .pagination .page-item.active .page-link {
+                background-color: #007bff;
+                border-color: #007bff;
+            }
+
+        .nav-link {
+            margin: 0 1rem;
+            color: white;
+            font-weight: 500;
+        }
+
+            .nav-link:hover {
+                color: #e0e0e0;
+            }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <!-- Hiển thị thông báo nếu có -->
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger" role="alert">
+                @TempData["ErrorMessage"]
+            </div>
+        }
+        @if (TempData["InfoMessage"] != null)
+        {
+            <div class="alert alert-info" role="alert">
+                @TempData["InfoMessage"]
+            </div>
+        }
+
+        <!-- Bảng danh sách đặt vé -->
+        <div class="booking-table">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Mã Đặt Vé</th>
+                        <th>Người Liên Hệ</th>
+                        <th>Email</th>
+                        <th>Chuyến Bay Đi</th>
+                        <th>Chuyến Bay Về</th>
+                        <th>Ngày Đặt</th>
+                        <th>Tổng Giá</th>
+                        <th>Trạng Thái</th>
+                        <th>Số Hành Khách</th>
+                        <th>Yêu Cầu Hóa Đơn</th>
+                        <th>Chi Tiết</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Bookings != null && Model.Bookings.Any())
+                    {
+                        @foreach (var booking in Model.Bookings)
+                        {
+                            <tr>
+                                <td>@booking.BookingId</td>
+                                <td>@booking.ContactName</td>
+                                <td>@booking.ContactEmail</td>
+                                <td>
+                                    @if (booking.OutboundFlight != null)
+                                    {
+                                        <span>@booking.OutboundFlight.FlightNumber (@booking.OutboundFlight.DepartureAirport?.City -> @booking.OutboundFlight.DestinationAirport?.City)</span>
+                                        <br />
+                                        <small>@booking.OutboundFlight.DepartureTime.ToString("dd/MM/yyyy HH:mm")</small>
+                                    }
+                                    else
+                                    {
+                                        <span>Không có</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (booking.ReturnFlight != null)
+                                    {
+                                        <span>@booking.ReturnFlight.FlightNumber (@booking.ReturnFlight.DepartureAirport?.City -> @booking.ReturnFlight.DestinationAirport?.City)</span>
+                                        <br />
+                                        <small>@booking.ReturnFlight.DepartureTime.ToString("dd/MM/yyyy HH:mm")</small>
+                                    }
+                                    else
+                                    {
+                                        <span>Không có</span>
+                                    }
+                                </td>
+                                <td>@booking.BookingDate.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>@booking.TotalPrice.ToString("N0") VNĐ</td>
+                                <td>@booking.PaymentStatus</td>
+                                <td>0</td> <!-- Sẽ cập nhật sau khi tải chi tiết -->
+                                <td>@(booking.InvoiceRequest ? "Có" : "Không")</td>
+                                <td>
+                                    <button type="button" class="btn btn-details btn-sm" data-bs-toggle="modal" data-bs-target="#detailsModal" data-booking-id="@booking.BookingId">
+                                        <i class="fas fa-eye"></i> Xem
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="11" class="text-center">Không có đặt vé nào để hiển thị.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Phân trang -->
+        <nav aria-label="Page navigation">
+            <ul class="pagination">
+                @{
+                    int totalPages = Model.TotalPages > 0 ? Model.TotalPages : 1;
+                    int currentPage = Model.CurrentPage > 0 ? Model.CurrentPage : 1;
+                    int maxPagesToShow = 5;
+                    int startPage = Math.Max(1, currentPage - 2);
+                    int endPage = Math.Min(totalPages, startPage + maxPagesToShow - 1);
+
+                    if (endPage - startPage + 1 < maxPagesToShow)
+                    {
+                        startPage = Math.Max(1, endPage - maxPagesToShow + 1);
+                    }
+                }
+
+                <!-- Nút "Trước" -->
+                <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                    <a class="page-link" href="@Url.Action("Flights_Book", "Admin", new { page = currentPage - 1, pageSize = Model.PageSize })" @(currentPage == 1 ? "aria-disabled='true'" : "")>Trước</a>
+                </li>
+
+                @if (startPage > 1)
+                {
+                    <li class="page-item">
+                        <a class="page-link" href="@Url.Action("Flights_Book", "Admin", new { page = 1, pageSize = Model.PageSize })">1</a>
+                    </li>
+                    if (startPage > 2)
+                    {
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    }
+                }
+
+                @for (int i = startPage; i <= endPage; i++)
+                {
+                    <li class="page-item @(i == currentPage ? "active" : "")">
+                        <a class="page-link" href="@Url.Action("Flights_Book", "Admin", new { page = i, pageSize = Model.PageSize })">@i</a>
+                    </li>
+                }
+
+                @if (endPage < totalPages)
+                {
+                    if (endPage < totalPages - 1)
+                    {
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    }
+                    <li class="page-item">
+                        <a class="page-link" href="@Url.Action("Flights_Book", "Admin", new { page = totalPages, pageSize = Model.PageSize })">@totalPages</a>
+                    </li>
+                }
+
+                <!-- Nút "Sau" -->
+                <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                    <a class="page-link" href="@Url.Action("Flights_Book", "Admin", new { page = currentPage + 1, pageSize = Model.PageSize })" @(currentPage == totalPages ? "aria-disabled='true'" : "")>Sau</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+
+    <!-- Modal hiển thị chi tiết đặt vé -->
+    <div class="modal fade" id="detailsModal" tabindex="-1" aria-labelledby="detailsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="detailsModalLabel">Chi Tiết Đặt Vé</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <h6>Thông Tin Liên Hệ</h6>
+                    <p><strong>Tên:</strong> <span id="contactName"></span></p>
+                    <p><strong>Email:</strong> <span id="contactEmail"></span></p>
+                    <p><strong>Điện Thoại:</strong> <span id="contactPhone"></span></p>
+                    <p><strong>Giới Tính:</strong> <span id="contactGender"></span></p>
+
+                    <h6>Thông Tin Chuyến Bay</h6>
+                    <p><strong>Chuyến Bay Đi:</strong> <span id="outboundFlight"></span></p>
+                    <p><strong>Chuyến Bay Về:</strong> <span id="returnFlight"></span></p>
+
+                    <h6>Danh Sách Hành Khách</h6>
+                    <table class="table table-bordered" id="passengersTable">
+                        <thead>
+                            <tr>
+                                <th>Họ Tên</th>
+                                <th>Giới Tính</th>
+                                <th>Ngày Sinh</th>
+                                <th>Quốc Tịch</th>
+                                <th>Loại Giấy Tờ</th>
+                                <th>Phí Hành Lý</th>
+                                <th>Loại Hành Khách</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+
+                    <h6>Thông Tin Hóa Đơn</h6>
+                    <div id="invoiceInfo">
+                        <p><strong>Tên Công Ty:</strong> <span id="companyName"></span></p>
+                        <p><strong>Địa Chỉ:</strong> <span id="companyAddress"></span></p>
+                        <p><strong>Thành Phố:</strong> <span id="companyCity"></span></p>
+                        <p><strong>Mã Số Thuế:</strong> <span id="taxCode"></span></p>
+                        <p><strong>Người Nhận Hóa Đơn:</strong> <span id="invoiceRecipient"></span></p>
+                        <p><strong>Điện Thoại:</strong> <span id="invoicePhone"></span></p>
+                        <p><strong>Email:</strong> <span id="invoiceEmail"></span></p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and Popper.js -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('.btn-details').on('click', function () {
+                var bookingId = $(this).data('booking-id');
+
+                $.ajax({
+                    url: '@Url.Action("GetBookingDetails", "Admin")',
+                    type: 'GET',
+                    data: { bookingId: bookingId },
+                    success: function (data) {
+                        // Cập nhật thông tin liên hệ
+                        $('#contactName').text(data.contactName);
+                        $('#contactEmail').text(data.contactEmail);
+                        $('#contactPhone').text(data.contactPhone);
+                        $('#contactGender').text(data.contactGender);
+
+                        // Cập nhật thông tin chuyến bay
+                        $('#outboundFlight').text(data.outboundFlight ?
+                            `${data.outboundFlight.flightNumber} (${data.outboundFlight.departureAirport.city} -> ${data.outboundFlight.destinationAirport.city}) - ${new Date(data.outboundFlight.departureTime).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}` :
+                            'Không có');
+                        $('#returnFlight').text(data.returnFlight ?
+                            `${data.returnFlight.flightNumber} (${data.returnFlight.departureAirport.city} -> ${data.returnFlight.destinationAirport.city}) - ${new Date(data.returnFlight.departureTime).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}` :
+                            'Không có');
+
+                        // Cập nhật danh sách hành khách
+                        var passengersTableBody = $('#passengersTable tbody');
+                        passengersTableBody.empty();
+                        if (data.passengers && data.passengers.length > 0) {
+                            data.passengers.forEach(function (passenger) {
+                                var row = `<tr>
+                                    <td>${passenger.fullName}</td>
+                                    <td>${passenger.gender}</td>
+                                    <td>${passenger.dateOfBirth ? new Date(passenger.dateOfBirth).toLocaleDateString('vi-VN') : 'N/A'}</td>
+                                    <td>${passenger.nationality}</td>
+                                    <td>${passenger.idType}</td>
+                                    <td>${passenger.luggageFee.toLocaleString('vi-VN')} VNĐ</td>
+                                    <td>${passenger.isAdult ? 'Người Lớn' : 'Trẻ Em'}</td>
+                                </tr>`;
+                                passengersTableBody.append(row);
+                            });
+
+                            // Cập nhật số hành khách trong bảng chính
+                            $(`button[data-booking-id="${bookingId}"]`).closest('tr').find('td:nth-child(9)').text(data.passengers.length);
+                        } else {
+                            passengersTableBody.append('<tr><td colspan="7">Không có hành khách nào trong đặt vé này.</td></tr>');
+                        }
+
+                        // Cập nhật thông tin hóa đơn
+                        if (data.invoiceRequest) {
+                            $('#companyName').text(data.companyName);
+                            $('#companyAddress').text(data.companyAddress);
+                            $('#companyCity').text(data.companyCity);
+                            $('#taxCode').text(data.taxCode);
+                            $('#invoiceRecipient').text(data.invoiceRecipient);
+                            $('#invoicePhone').text(data.invoicePhone);
+                            $('#invoiceEmail').text(data.invoiceEmail);
+                        } else {
+                            $('#invoiceInfo').html('<p>Không yêu cầu hóa đơn.</p>');
+                        }
+
+                        // Cập nhật tiêu đề modal
+                        $('#detailsModalLabel').text(`Chi Tiết Đặt Vé - Mã: ${data.bookingId}`);
+                    },
+                    error: function (xhr) {
+                        alert(xhr.responseJSON ? xhr.responseJSON.message : 'Có lỗi xảy ra khi tải chi tiết đặt vé.');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
